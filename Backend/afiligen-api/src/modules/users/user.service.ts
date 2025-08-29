@@ -1,10 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { genSalt, hash } from 'bcrypt';
+import zxcvbn from 'zxcvbn';
 
 @Injectable()
 export class UserService {
@@ -17,6 +22,12 @@ export class UserService {
     return this.userRepository.find();
   }
 
+  async findByEmail(email: string) {
+    const user = await this.userRepository.findOneBy({ email });
+    if (!user) return null;
+    return user;
+  }
+
   async findOne(id: number): Promise<User | null> {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) throw new NotFoundException(`User with ID ${id} not found`);
@@ -24,9 +35,29 @@ export class UserService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const salt = await genSalt();
-    createUserDto.password = await hash(createUserDto.password, salt);
-    const user = this.userRepository.create(createUserDto);
+    const provider = createUserDto.provider || 'local';
+    if (provider === 'local') {
+      if (createUserDto.password) {
+        const { score } = zxcvbn(createUserDto.password);
+        if (score < 3) {
+          throw new BadRequestException('Password is too weak');
+        } else {
+          const salt = await genSalt();
+          createUserDto.password = await hash(createUserDto.password, salt);
+        }
+      } else {
+        throw new BadRequestException('Password is required');
+      }
+    } else {
+      createUserDto.password = null;
+    }
+
+    const user = this.userRepository.create({
+      ...createUserDto,
+      provider,
+      role: createUserDto.role || 'user',
+    });
+
     return this.userRepository.save(user);
   }
 
