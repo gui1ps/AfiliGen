@@ -28,9 +28,9 @@ export class UserService {
     return user;
   }
 
-  async findOne(id: number): Promise<User | null> {
-    const user = await this.userRepository.findOneBy({ id });
-    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+  async findOne(uuid: string): Promise<User | null> {
+    const user = await this.userRepository.findOneBy({ uuid });
+    if (!user) throw new NotFoundException(`User with uuid ${uuid} not found`);
     return user;
   }
 
@@ -61,9 +61,9 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    const user = await this.userRepository.findOneBy({ id });
-    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+  async update(uuid: string, updateUserDto: UpdateUserDto): Promise<User> {
+    const user = await this.userRepository.findOneBy({ uuid });
+    if (!user) throw new NotFoundException(`User with uuid ${uuid} not found`);
     if (updateUserDto.password) {
       const salt = await genSalt();
       updateUserDto.password = await hash(updateUserDto.password, salt);
@@ -72,10 +72,9 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async remove(id: number): Promise<void> {
-    const user = await this.userRepository.findOneBy({ id });
-    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
-
+  async remove(uuid: string): Promise<void> {
+    const user = await this.userRepository.findOneBy({ uuid });
+    if (!user) throw new NotFoundException(`User with uuid ${uuid} not found`);
     await this.userRepository.remove(user);
   }
 }
