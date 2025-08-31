@@ -27,11 +27,11 @@ export class UserController {
     return this.userService.findAll();
   }
 
-  @Get(':id')
+  @Get(':uuid')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
-  findOne(@Param('id') id: string): Promise<User | null> {
-    return this.userService.findOne(Number(id));
+  findOne(@Param('uuid') uuid: string): Promise<User | null> {
+    return this.userService.findOne(uuid);
   }
 
   @Post()
@@ -41,20 +41,20 @@ export class UserController {
     return this.userService.create(createUserDto);
   }
 
-  @Patch(':id')
+  @Patch(':uuid')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   update(
-    @Param('id') id: string,
+    @Param('uuid') uuid: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<User> {
-    return this.userService.update(Number(id), updateUserDto);
+    return this.userService.update(uuid, updateUserDto);
   }
 
-  @Delete(':id')
+  @Delete(':uuid')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
-  remove(@Param('id') id: string): Promise<void> {
-    return this.userService.remove(Number(id));
+  remove(@Param('uuid') uuid: string): Promise<void> {
+    return this.userService.remove(uuid);
   }
 }
