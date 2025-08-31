@@ -1,4 +1,3 @@
-// src/auth/auth.service.ts
 import {
   Injectable,
   UnauthorizedException,
@@ -9,6 +8,8 @@ import { UserService } from '../users/user.service';
 import { User } from '../users/user.entity';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { ResponseUtil } from '../common/utils/response.util';
+import { ServiceResponse } from '../common/interfaces/service-reponse.interface';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -53,7 +54,8 @@ export class AuthService {
     }
 
     const payload = {
-      sub: user.id,
+      id: user.id,
+      uuid: user.uuid,
       email: user.email,
       role: user.role || 'user',
     };
@@ -61,7 +63,9 @@ export class AuthService {
     return { access_token: this.jwtService.sign(payload) };
   }
 
-  async register(registerUserDto: RegisterUserDto): Promise<User> {
+  async register(
+    registerUserDto: RegisterUserDto,
+  ): Promise<ServiceResponse<any>> {
     const existingUser = await this.usersService.findByEmail(
       registerUserDto.email,
     );
@@ -71,11 +75,11 @@ export class AuthService {
 
     const newUser = await this.usersService.create({
       ...registerUserDto,
-      role: 'admin',
+      role: 'user',
       provider: 'local',
     });
 
-    return newUser;
+    return ResponseUtil.success('User created successfully!', newUser);
   }
 
   async socialLogin(profile: {
