@@ -17,32 +17,29 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('users')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   findAll(): Promise<User[]> {
     return this.userService.findAll();
   }
 
   @Get(':uuid')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   findOne(@Param('uuid') uuid: string): Promise<User | null> {
     return this.userService.findOne(uuid);
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   create(@Body() createUserDto: CreateUserDto): Promise<User> {
     return this.userService.create(createUserDto);
   }
 
   @Patch(':uuid')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   update(
     @Param('uuid') uuid: string,
@@ -52,7 +49,6 @@ export class UserController {
   }
 
   @Delete(':uuid')
-  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   remove(@Param('uuid') uuid: string): Promise<void> {
     return this.userService.remove(uuid);

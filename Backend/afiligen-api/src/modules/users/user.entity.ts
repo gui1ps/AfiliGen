@@ -1,12 +1,9 @@
-import { Entity, Column, Generated } from 'typeorm';
+import { Entity, Column, OneToMany } from 'typeorm';
 import { BaseEntity } from '../common/entities/base.entity';
+import { Integration } from '../integrations/entities/integration.entity';
 
 @Entity('users')
 export class User extends BaseEntity {
-  @Column()
-  @Generated('uuid')
-  uuid: string;
-
   @Column({ unique: true })
   email: string;
 
@@ -21,4 +18,7 @@ export class User extends BaseEntity {
 
   @Column({ default: 'user' })
   role: string;
+
+  @OneToMany(() => Integration, (integration) => integration.user)
+  integrations: Integration[];
 }
