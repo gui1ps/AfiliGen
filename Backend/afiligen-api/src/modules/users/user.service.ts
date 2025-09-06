@@ -47,6 +47,9 @@ export class UserService {
   }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
+    const existingUser = await this.findByEmail(createUserDto.email, false);
+    if (existingUser) throw new BadRequestException('This user already exists');
+
     const provider = createUserDto.provider || 'local';
     if (provider === 'local') {
       if (createUserDto.password) {
