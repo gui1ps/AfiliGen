@@ -16,6 +16,7 @@ import { CreateIntegrationCredentialDto } from '../dtos/create-integration-crede
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
+import { GetUser } from 'src/modules/auth/decorators/get-user.decorator';
 
 @Controller('integrations')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -24,8 +25,11 @@ export class IntegrationsController {
 
   @Post()
   @Roles('user')
-  async createIntegration(@Body() dto: CreateIntegrationDto) {
-    return this.integrationsService.create(dto);
+  async createIntegration(
+    @GetUser('userUuid') userUuid: string,
+    @Body() dto: CreateIntegrationDto,
+  ) {
+    return this.integrationsService.create(userUuid, dto);
   }
 
   @Post(':id/credentials')
@@ -33,8 +37,9 @@ export class IntegrationsController {
   async addCredential(
     @Param('id', ParseIntPipe) integrationId: number,
     @Body() dto: CreateIntegrationCredentialDto,
+    @GetUser('userUuid') userUuid: string,
   ) {
-    return this.integrationsService.addCredential(integrationId, dto);
+    return this.integrationsService.addCredential(userUuid, integrationId, dto);
   }
 
   @Patch(':id/credentials')
@@ -42,19 +47,41 @@ export class IntegrationsController {
   async updateCredential(
     @Param('id', ParseIntPipe) integrationId: number,
     @Body() dto: UpdateIntegrationCredentialDto,
+    @GetUser('userUuid') userUuid: string,
   ) {
-    return this.integrationsService.updateCredential(integrationId, dto);
+    return this.integrationsService.updateCredential(
+      userUuid,
+      integrationId,
+      dto,
+    );
   }
 
-  @Patch(':id/status')
+  @Patch(':id')
   @Roles('user')
-  async updateIntegrationStatus(@Body() dto: UpdateIntegrationDto) {
-    return this.integrationsService.updateIntegrationStatus(dto);
+  async updateIntegrationStatus(
+    @GetUser('userUuid') userUuid: string,
+    @Param('id', ParseIntPipe) integrationId: number,
+    @Body() dto: UpdateIntegrationDto,
+  ) {
+    return this.integrationsService.updateIntegrationStatus(
+      userUuid,
+      integrationId,
+      dto,
+    );
   }
 
-  @Get('user/:userId')
+  @Get()
   @Roles('user')
-  async getUserIntegrations(@Param('userId', ParseIntPipe) userId: number) {
-    return this.integrationsService.getUserIntegrations(userId);
+  async getUserIntegrations(@GetUser('userUuid') userUuid: string) {
+    return this.integrationsService.getUserIntegrations(userUuid);
+  }
+
+  @Get(':id')
+  @Roles('user')
+  async getUserIntegration(
+    @GetUser('userUuid') userUuid: string,
+    @Param('id', ParseIntPipe) integrationId: number,
+  ) {
+    return this.integrationsService.getUserIntegration(userUuid, integrationId);
   }
 }

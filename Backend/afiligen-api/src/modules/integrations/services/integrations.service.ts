@@ -8,6 +8,7 @@ import { UpdateIntegrationDto } from '../dtos/update-integration.dto';
 import { UpdateIntegrationCredentialDto } from '../dtos/update-integration-credential.dto';
 import { CreateIntegrationCredentialDto } from '../dtos/create-integration-credential.dto';
 import { UserService } from 'src/modules/users/user.service';
+import { ConflictException } from '@nestjs/common';
 
 @Injectable()
 export class IntegrationsService {
@@ -19,28 +20,31 @@ export class IntegrationsService {
     private usersService: UserService,
   ) {}
 
-  async create(newIntegration: CreateIntegrationDto): Promise<Integration> {
-    const user = await this.usersService.findOne(newIntegration.user_uuid);
+  async create(
+    userUuid: string,
+    newIntegration: CreateIntegrationDto,
+  ): Promise<Integration> {
+    const user = await this.usersService.findOne(userUuid);
     if (!user)
-      throw new NotFoundException(
-        `User with uuid ${newIntegration.user_uuid} not found`,
-      );
+      throw new NotFoundException(`User with uuid ${userUuid} not found`);
     if (!newIntegration.status) {
       newIntegration.status = 'active';
     }
-    let integration: Integration | null =
-      this.integrationRepo.create(newIntegration);
+    let integration: Integration | null = this.integrationRepo.create({
+      ...newIntegration,
+      user,
+    });
     const savedIntegration = await this.integrationRepo.save(integration);
 
     if (newIntegration.credentials && newIntegration.credentials.length > 0) {
       for (const credential of newIntegration.credentials) {
-        await this.addCredential(savedIntegration.id, credential);
+        await this.addCredential(userUuid, savedIntegration.id, credential);
       }
     }
 
     integration = await this.integrationRepo.findOne({
       where: { id: savedIntegration.id },
-      relations: ['credentials'],
+      relations: ['credentials', 'user'],
     });
 
     if (!integration) {
@@ -51,25 +55,47 @@ export class IntegrationsService {
   }
 
   async addCredential(
+    userUuid: string,
     integrationId: number,
     credentialData: CreateIntegrationCredentialDto,
   ): Promise<IntegrationCredential> {
+    const user = await this.usersService.findOne(userUuid);
+    if (!user)
+      throw new NotFoundException(`User with uuid ${userUuid} not found`);
     const integration = await this.integrationRepo.findOne({
-      where: { id: integrationId },
+      where: { id: integrationId, user: { id: user.id } },
+      relations: ['credentials'],
     });
     if (!integration) throw new NotFoundException('Integration not found');
+    const currentCredentialsKeys = integration.credentials?.map((cred) => {
+      return cred.key;
+    });
     const key = credentialData.key;
+    if (key.length < 1) {
+      throw new NotFoundException('There is no key for this credential');
+    }
+    if (currentCredentialsKeys.includes(key))
+      throw new ConflictException(
+        'There is already a credential with this key registered for this integration',
+      );
     const value = credentialData.value;
+    if (value.length < 1) {
+      throw new NotFoundException('There is no value for this credential');
+    }
     const credential = this.credentialsRepo.create({ integration, key, value });
     return this.credentialsRepo.save(credential);
   }
 
   async updateCredential(
+    userUuid: string,
     integrationId: number,
     newCredentialValue: UpdateIntegrationCredentialDto,
   ): Promise<Integration> {
-    let integration: Integration | null = await this.integrationRepo.findOne({
-      where: { id: integrationId },
+    const user = await this.usersService.findOne(userUuid);
+    if (!user)
+      throw new NotFoundException(`User with uuid ${userUuid} not found`);
+    let integration = await this.integrationRepo.findOne({
+      where: { id: integrationId, user: { id: user.id } },
       relations: ['credentials'],
     });
     if (!integration) throw new NotFoundException('Integration not found');
@@ -108,20 +134,43 @@ export class IntegrationsService {
   }
 
   async updateIntegrationStatus(
-    updateData: UpdateIntegrationDto,
+    userUuid: string,
+    integrationId: number,
+    dto: UpdateIntegrationDto,
   ): Promise<Integration> {
+    const user = await this.usersService.findOne(userUuid);
+    if (!user)
+      throw new NotFoundException(`User with uuid ${userUuid} not found`);
     const integration = await this.integrationRepo.findOne({
-      where: { id: updateData.id },
+      where: { id: integrationId, user: { id: user.id } },
+      relations: ['credentials'],
     });
     if (!integration) throw new NotFoundException('Integration not found');
-    integration.status = updateData.status;
+    integration.status = dto.status;
     return this.integrationRepo.save(integration);
   }
 
-  async getUserIntegrations(userId: number): Promise<Integration[]> {
-    return this.integrationRepo.find({
-      where: { user: { id: userId } },
+  async getUserIntegrations(userUuid: string): Promise<Integration[]> {
+    const integrations = await this.integrationRepo.find({
+      where: { user: { uuid: userUuid } },
       relations: ['credentials'],
     });
+    if (!integrations)
+      throw new NotFoundException(
+        'There are no integrations available for this user.',
+      );
+    return integrations;
+  }
+
+  async getUserIntegration(
+    userUuid: string,
+    integrationId: number,
+  ): Promise<Integration> {
+    const integration = await this.integrationRepo.findOne({
+      where: { user: { uuid: userUuid }, id: integrationId },
+      relations: ['credentials'],
+    });
+    if (!integration) throw new NotFoundException('Integration not found');
+    return integration;
   }
 }
