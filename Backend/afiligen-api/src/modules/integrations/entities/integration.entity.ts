@@ -1,11 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  OneToMany,
-  JoinColumn,
-} from 'typeorm';
+import { Entity, Column, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
 import { User } from 'src/modules/users/user.entity';
 import { IntegrationCredential } from './integration-credentials.entity';
 import { BaseEntity } from 'src/modules/common/entities/base.entity';
@@ -23,7 +16,7 @@ export class Integration extends BaseEntity {
   provider: string;
 
   @Column({ default: 'active' })
-  status: string;
+  status: 'active' | 'inactive';
 
   @OneToMany(() => IntegrationCredential, (cred) => cred.integration)
   credentials: IntegrationCredential[];
