@@ -22,8 +22,20 @@ export class UserService {
     return this.userRepository.find();
   }
 
-  async findByEmail(email: string) {
-    const user = await this.userRepository.findOneBy({ email });
+  async findByEmail(
+    email: string,
+    bringPassword: boolean,
+  ): Promise<User | null> {
+    let user;
+    if (!bringPassword) {
+      user = await this.userRepository.findOneBy({ email });
+    } else {
+      user = this.userRepository
+        .createQueryBuilder('user')
+        .addSelect('user.password')
+        .where('user.email = :email', { email })
+        .getOne();
+    }
     if (!user) return null;
     return user;
   }
@@ -55,7 +67,7 @@ export class UserService {
     const user = this.userRepository.create({
       ...createUserDto,
       provider,
-      role: createUserDto.role || 'user',
+      role: createUserDto.role,
     });
 
     return this.userRepository.save(user);
@@ -69,7 +81,7 @@ export class UserService {
       updateUserDto.password = await hash(updateUserDto.password, salt);
     }
     Object.assign(user, updateUserDto);
-    return this.userRepository.save(user);
+    return this.userRepository.save(user, {});
   }
 
   async remove(uuid: string): Promise<void> {
