@@ -5,14 +5,16 @@ import { IntegrationCredential } from './entities/integration-credentials.entity
 import { IntegrationsService } from './services/integrations.service';
 import { IntegrationsController } from './controllers/integrations.controller';
 import { UserModule } from 'src/modules/users/user.module';
+import { WhatsappService } from './services/strategies/whatsapp.strategy';
+import { WhatsappController } from './controllers/whatsapp.controller';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Integration, IntegrationCredential]),
     UserModule,
   ],
-  controllers: [IntegrationsController],
-  providers: [IntegrationsService],
+  controllers: [IntegrationsController, WhatsappController],
+  providers: [IntegrationsService, WhatsappService],
   exports: [IntegrationsService],
 })
 export class IntegrationsModule {}

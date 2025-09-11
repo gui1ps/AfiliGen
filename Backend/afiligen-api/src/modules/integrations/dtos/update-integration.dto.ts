@@ -1,4 +1,4 @@
-import { IsIn, IsString } from 'class-validator';
+import { IsIn } from 'class-validator';
 
 export class UpdateIntegrationDto {
   @IsIn(['active', 'inactive'])
