@@ -9,6 +9,7 @@ import { UpdateIntegrationCredentialDto } from '../dtos/update-integration-crede
 import { CreateIntegrationCredentialDto } from '../dtos/create-integration-credential.dto';
 import { UserService } from 'src/modules/users/user.service';
 import { ConflictException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 
 @Injectable()
 export class IntegrationsService {
@@ -164,13 +165,61 @@ export class IntegrationsService {
 
   async getUserIntegration(
     userUuid: string,
-    integrationId: number,
+    integrationId?: number,
+    provider?: string,
   ): Promise<Integration> {
-    const integration = await this.integrationRepo.findOne({
-      where: { user: { uuid: userUuid }, id: integrationId },
-      relations: ['credentials'],
-    });
-    if (!integration) throw new NotFoundException('Integration not found');
-    return integration;
+    if (integrationId) {
+      const integration = await this.integrationRepo.findOne({
+        where: { user: { uuid: userUuid }, id: integrationId },
+        relations: ['credentials'],
+      });
+      if (!integration)
+        throw new NotFoundException(
+          `Integration not found for id ${integrationId}`,
+        );
+      return integration;
+    } else if (provider) {
+      const integration = await this.integrationRepo.findOne({
+        where: { user: { uuid: userUuid }, provider },
+        relations: ['credentials'],
+      });
+      if (!integration) {
+        throw new NotFoundException(
+          `Integration not found for id ${integrationId}`,
+        );
+      }
+      return integration;
+    } else {
+      throw new BadRequestException('IntegrationId or byType not provided');
+    }
+  }
+
+  async getIntegrationCredentialsAsObject<T>(
+    userUuid: string,
+    integrationId: number,
+  ): Promise<T> {
+    const integration = await this.getUserIntegration(userUuid, integrationId);
+
+    if (!integration) {
+      throw new NotFoundException(
+        `Integration with id ${integrationId} not found`,
+      );
+    }
+
+    if (!integration.credentials || integration.credentials.length === 0) {
+      throw new NotFoundException(
+        `No credentials found for integration ${integrationId}`,
+      );
+    }
+
+    const credentialsObject = integration.credentials.reduce(
+      (acc, cred) => {
+        acc[cred.key] = cred.value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
+
+    return credentialsObject as T;
   }
 }

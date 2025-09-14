@@ -17,6 +17,7 @@ import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { GetUser } from 'src/modules/auth/decorators/get-user.decorator';
+import { GetIntegrationByProviderDto } from '../dtos/get-integration-by-provider.dto';
 
 @Controller('integrations')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -83,5 +84,18 @@ export class IntegrationsController {
     @Param('id', ParseIntPipe) integrationId: number,
   ) {
     return this.integrationsService.getUserIntegration(userUuid, integrationId);
+  }
+
+  @Get('provider')
+  @Roles('user')
+  async getUserIntegrationByProvider(
+    @GetUser('userUuid') userUuid: string,
+    @Body() dto: GetIntegrationByProviderDto,
+  ) {
+    return this.integrationsService.getUserIntegration(
+      userUuid,
+      undefined,
+      dto.provider,
+    );
   }
 }
