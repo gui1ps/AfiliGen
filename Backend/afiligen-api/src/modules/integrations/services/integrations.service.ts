@@ -168,7 +168,7 @@ export class IntegrationsService {
     integrationId?: number,
     provider?: string,
   ): Promise<Integration> {
-    if (integrationId) {
+    if (integrationId != undefined) {
       const integration = await this.integrationRepo.findOne({
         where: { user: { uuid: userUuid }, id: integrationId },
         relations: ['credentials'],
@@ -185,7 +185,7 @@ export class IntegrationsService {
       });
       if (!integration) {
         throw new NotFoundException(
-          `Integration not found for id ${integrationId}`,
+          `Integration not found for provider ${provider}`,
         );
       }
       return integration;

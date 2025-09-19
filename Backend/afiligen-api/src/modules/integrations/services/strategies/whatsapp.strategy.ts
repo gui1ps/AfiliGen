@@ -1,16 +1,23 @@
 import { IntegrationsService } from '../integrations.service';
-import { Client } from 'whatsapp-web.js';
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Client, LocalAuth } from 'whatsapp-web.js';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ConflictException,
+  OnModuleInit,
+  BadRequestException,
+  OnApplicationShutdown,
+} from '@nestjs/common';
 import { UserService } from 'src/modules/users/user.service';
 import * as qrcode from 'qrcode-terminal';
 import { SendMessageDto } from '../../dtos/whatsapp-message.dto';
-import { ConflictException } from '@nestjs/common';
-import { BadRequestException } from '@nestjs/common';
 import { GroupChat } from 'whatsapp-web.js';
-import { group } from 'console';
+import fs from 'fs';
+import path from 'path';
 
 @Injectable()
-export class WhatsappService {
+export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
   private readonly logger = new Logger(WhatsappService.name);
   private clients: Map<string, Client> = new Map();
 
@@ -18,6 +25,52 @@ export class WhatsappService {
     private integrationsService: IntegrationsService,
     private userService: UserService,
   ) {}
+
+  async deleteSession(userUuid: string) {
+    const sessionsDir = path.join(process.cwd(), '.wwebjs_auth');
+    if (fs.existsSync(sessionsDir)) {
+      const sessionFolders = fs.readdirSync(sessionsDir);
+      for (const folder of sessionFolders) {
+        const folderPath = path.join(sessionsDir, folder);
+        const userIdentification = folder.replace('session-', '');
+        if (userIdentification === userUuid) {
+          try {
+            await fs.promises.rm(folderPath, { force: true, recursive: true });
+          } catch (err) {
+            this.logger.log(`Erro ao apgar a pasta ${folderPath}`);
+          }
+        }
+      }
+    }
+  }
+
+  async onModuleInit() {
+    const sessionsDir = path.join(process.cwd(), '.wwebjs_auth');
+    if (fs.existsSync(sessionsDir)) {
+      const sessionFolders = fs.readdirSync(sessionsDir);
+      for (const folder of sessionFolders) {
+        const folderPath = path.join(sessionsDir, folder);
+        try {
+          await fs.promises.rm(folderPath, { force: true, recursive: true });
+        } catch (err) {
+          this.logger.log(`Erro ao apgar a pasta ${folderPath}`);
+        }
+      }
+    }
+  }
+
+  async onApplicationShutdown(signal?: string) {
+    this.logger.log(`App desligando (${signal}), destruindo clientes...`);
+    for (const [uuid, client] of this.clients) {
+      await client.destroy();
+      this.logger.log(`Cliente ${uuid} destruído`);
+    }
+  }
+
+  async checkClientState(client: Client): Promise<string> {
+    const state = await client.getState();
+    return state;
+  }
 
   async connect(userUuid: string): Promise<any> {
     const user = await this.userService.findOne(userUuid);
@@ -27,6 +80,31 @@ export class WhatsappService {
     if (this.clients.has(userUuid)) {
       this.logger.log(`Cliente já existente para usuário ${user.name}`);
       return { status: 'already_connected' };
+    }
+
+    try {
+      const whatsappIntegration =
+        await this.integrationsService.getUserIntegration(
+          userUuid,
+          undefined,
+          'whatsapp',
+        );
+      if (whatsappIntegration.status !== 'active') {
+        await this.integrationsService.updateIntegrationStatus(
+          userUuid,
+          whatsappIntegration.id,
+          { status: 'active' },
+        );
+      }
+    } catch (err) {
+      if (err instanceof NotFoundException) {
+        await this.integrationsService.create(userUuid, {
+          provider: 'whatsapp',
+          type: 'social',
+        });
+      } else {
+        throw err;
+      }
     }
 
     const client = new Client({
@@ -44,6 +122,9 @@ export class WhatsappService {
           '--disable-gpu',
         ],
       },
+      authStrategy: new LocalAuth({
+        clientId: userUuid,
+      }),
     });
 
     return new Promise((resolve, reject) => {
@@ -53,12 +134,17 @@ export class WhatsappService {
         resolve({ qr, status: 'scan_required' });
       });
 
+      client.on('auth_failure', async (msg) => {
+        this.logger.error(`Falha de autenticação para ${userUuid}: ${msg}`);
+        await this.disconnect(userUuid);
+        await this.deleteSession(userUuid);
+      });
+
       client.on('ready', async () => {
         this.logger.log(`WhatsApp conectado para usuário ${user.name}`);
       });
 
       client.on('disconnected', async () => {
-        this.logger.warn(`WhatsApp desconectado para usuário ${user.name}`);
         await this.disconnect(userUuid);
       });
 
@@ -71,12 +157,25 @@ export class WhatsappService {
     const client = this.clients.get(userUuid);
     if (!client)
       throw new NotFoundException(`No client found for user uuid ${userUuid}`);
-    this.logger.log(this.clients);
+    const connectionState = await client.getState();
+    const clientState = await this.checkClientState(client);
+    if (clientState !== 'CONNECTED') {
+      new ConflictException(`The client is not yet connected.`);
+    }
     await client.destroy();
     this.clients.delete(userUuid);
+    const whatsappIntegration =
+      await this.integrationsService.getUserIntegration(
+        userUuid,
+        undefined,
+        'whatsapp',
+      );
+    await this.integrationsService.updateIntegrationStatus(
+      userUuid,
+      whatsappIntegration.id,
+      { status: 'inactive' },
+    );
     this.logger.log(`Cliente desconectado para ${userUuid}`);
-    this.logger.log(this.clients);
-    this.logger.warn(`Nenhum cliente ativo encontrado para ${userUuid}`);
   }
 
   async sendMessage(

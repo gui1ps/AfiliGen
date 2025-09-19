@@ -29,10 +29,12 @@ services:
     volumes:
       - ./Backend/afiligen-api:/usr/src/app
       - /usr/src/app/node_modules
-      - /usr/src/app/.wwebjs_auth 
     command: npm run start:dev
     networks:
       - afiligen_network
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
 
 volumes:
   postgres_data:
