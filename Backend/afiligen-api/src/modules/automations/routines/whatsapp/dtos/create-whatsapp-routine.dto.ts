@@ -12,22 +12,7 @@ import {
 } from 'class-validator';
 
 import { Type } from 'class-transformer';
-
-class Message {
-  @IsEnum(['text', 'media'])
-  type: 'text' | 'media';
-
-  @IsString()
-  content: string;
-
-  @IsOptional()
-  @IsString()
-  mimeType?: string;
-
-  @IsOptional()
-  @IsString()
-  caption?: string;
-}
+import { CreateWhatsappMessageDto } from './create-whatsapp-message.dto';
 
 export class CreateWhatsappRoutineDto {
   @IsString()
@@ -58,10 +43,8 @@ export class CreateWhatsappRoutineDto {
   @ArrayNotEmpty()
   recipients: string[];
 
-  @IsArray()
-  @IsNotEmpty()
+  @IsOptional()
   @ValidateNested({ each: true })
-  @ArrayNotEmpty()
-  @Type(() => Message)
-  messages: Message[];
+  @Type(() => CreateWhatsappMessageDto)
+  messages?: CreateWhatsappMessageDto[];
 }

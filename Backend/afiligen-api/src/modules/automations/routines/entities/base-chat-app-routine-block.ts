@@ -8,7 +8,7 @@ import {
 import { BaseEntity } from 'src/modules/common/entities/base.entity';
 import { BaseRoutineEntity } from './base-routine.entity';
 
-@Entity('chat_app__routine_blocks')
+@Entity('chat_app_routine_blocks')
 @TableInheritance({ column: { type: 'varchar', name: 'type' } })
 export class BaseChatAppRoutineBlock extends BaseEntity {
   @ManyToOne(
