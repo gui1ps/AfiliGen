@@ -8,6 +8,7 @@ import { BaseRoutineEntity } from '../entities/base-routine.entity';
 import { WhatsappMessage } from './entities/whatsapp-message.entity.ts';
 import { BaseChatAppRoutineBlock } from '../entities/base-chat-app-routine-block';
 import { WhatsappRoutineBlock } from './entities/whatsapp-routine-block';
+import { WhatsappQueueModule } from './queue/whatsapp-queue.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { WhatsappRoutineBlock } from './entities/whatsapp-routine-block';
       WhatsappMessage,
       BaseChatAppRoutineBlock,
       WhatsappRoutineBlock,
+      WhatsappQueueModule,
     ]),
     UserModule,
   ],

@@ -5,6 +5,7 @@ import { UserModule } from './modules/users/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { AutomationsModule } from './modules/automations/automations.module';
+import { BullModule } from '@nestjs/bull';
 
 @Module({
   imports: [
@@ -24,6 +25,18 @@ import { AutomationsModule } from './modules/automations/automations.module';
         database: configService.get<string>('DATABASE_NAME'),
         autoLoadEntities: true,
         synchronize: true,
+      }),
+    }),
+    BullModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        redis: {
+          host: configService.get<string>('REDIS_HOST'),
+          port: configService.get<number>('REDIS_PORT') || 6379,
+          password: configService.get<string>('REDIS_PASSWORD'),
+        },
+        prefix: configService.get<string>('BULL_PREFIX') || 'afiligen::bull',
       }),
     }),
     UserModule,
