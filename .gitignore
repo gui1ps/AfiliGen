@@ -1,1 +1,4 @@
 init-scripts/create-user.sql
+Backend/afiligen-api/.wwebjs_auth
+Backend/afiligen-api/.wwebjs_cache
+core

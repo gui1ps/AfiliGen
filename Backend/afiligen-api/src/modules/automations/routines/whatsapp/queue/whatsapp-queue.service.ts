@@ -10,10 +10,30 @@ export class WhatsappQueueService {
   constructor(@InjectQueue('whatsapp') private readonly whatsappQueue: Queue) {}
 
   async enqueueBlock(blockId: number, triggerAt: Date, payload?: any) {
-    //const exampĺeDate = new Date('2025-09-23 10:31:00-03');
-    //this.logger.log(exampĺeDate.toDateString());
+    const triggerHour = triggerAt.getUTCHours();
+    const triggerMinute = triggerAt.getUTCMinutes();
+    const triggerSecond = triggerAt.getUTCSeconds();
 
-    const delay = Math.max(0, triggerAt.getTime() - Date.now());
+    const now = new Date();
+
+    const todayTrigger = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        triggerHour,
+        triggerMinute,
+        triggerSecond,
+        0,
+      ),
+    );
+
+    const delay = todayTrigger.getTime() - Date.now();
+
+    /*this.logger.log(
+      `${todayTrigger.toISOString()} (trigger) - ${now.toISOString()} (agora) = EXECUTA EM ${(delay / 1000 / 60).toFixed(2)} minutos`,
+    );*/
+
     this.logger.log(
       `Enfileirando bloco ${blockId} para ${triggerAt.toISOString()} (delay ${delay}ms)`,
     );

@@ -21,4 +21,10 @@ export class BaseChatAppRoutineBlock extends BaseEntity {
 
   @Column({ type: 'timestamptz' })
   triggerTime: Date;
+
+  @Column({ type: 'boolean', default: false })
+  sent: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  active: boolean;
 }

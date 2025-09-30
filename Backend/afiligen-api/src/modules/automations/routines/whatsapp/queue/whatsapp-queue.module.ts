@@ -1,4 +1,3 @@
-// src/modules/automations/routines/whatsapp/queue/whatsapp-queue.module.ts
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bull';
 import { WhatsappQueueService } from './whatsapp-queue.service';
@@ -10,6 +9,8 @@ import { WhatsappRoutineBlock } from '../entities/whatsapp-routine-block';
 import { WhatsappRoutine } from '../entities/whatsapp-routine.entity';
 import { WhatsappMessage } from '../entities/whatsapp-message.entity.ts';
 import { UserModule } from 'src/modules/users/user.module';
+import { IntegrationsModule } from 'src/modules/integrations/integrations.module';
+import { WhatsappRoutineBlocksService } from '../services/whatsapp-routine-block.service';
 
 @Module({
   imports: [
@@ -22,12 +23,14 @@ import { UserModule } from 'src/modules/users/user.module';
       WhatsappMessage,
     ]),
     UserModule,
+    IntegrationsModule,
   ],
   providers: [
     WhatsappQueueService,
     WhatsappQueueProcessor,
     RoutinesSchedulerService,
     WhatsappService,
+    WhatsappRoutineBlocksService,
   ],
   exports: [WhatsappQueueService],
 })

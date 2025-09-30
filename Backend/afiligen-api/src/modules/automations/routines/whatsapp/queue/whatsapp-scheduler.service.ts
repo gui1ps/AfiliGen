@@ -4,9 +4,10 @@ import {
   OnModuleInit,
   OnModuleDestroy,
 } from '@nestjs/common';
-import { DataSource, Between } from 'typeorm';
+import { DataSource } from 'typeorm';
 import { WhatsappRoutineBlock } from '../entities/whatsapp-routine-block';
 import { WhatsappQueueService } from './whatsapp-queue.service';
+import { WhatsappRoutineBlocksService } from '../services/whatsapp-routine-block.service';
 
 @Injectable()
 export class RoutinesSchedulerService implements OnModuleInit, OnModuleDestroy {
@@ -16,12 +17,11 @@ export class RoutinesSchedulerService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly dataSource: DataSource,
     private readonly queueService: WhatsappQueueService,
+    private readonly blocksService: WhatsappRoutineBlocksService,
   ) {}
 
   async onModuleInit() {
-    // iniciar scheduler a cada 60s
     this.intervalRef = setInterval(() => this.scanAndSchedule(), 60 * 1000);
-    // também rodar imediatamente uma primeira vez
     this.scanAndSchedule().catch((err) => this.logger.error(err));
   }
 
@@ -29,28 +29,50 @@ export class RoutinesSchedulerService implements OnModuleInit, OnModuleDestroy {
     if (this.intervalRef) clearInterval(this.intervalRef);
   }
 
-  /**
-   * Busca blocos cujos triggerTime esteja nos próximos N minutos e que não tenham sido agendados.
-   * Para simplificar, vamos buscar blocos com triggerTime entre now e now + window (ex: 2 minutos).
-   * Você pode melhorar marcando um campo scheduledAt para evitar re-enqueue duplicado.
-   */
+  convertToMinutes(time: string): number {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
+
   async scanAndSchedule() {
     const windowMinutes = 2;
-    const now = new Date();
-    const windowEnd = new Date(now.getTime() + windowMinutes * 60 * 1000);
+    const currentTimer = new Date();
+    const windowEnd = new Date(
+      currentTimer.getTime() + windowMinutes * 60 * 1000,
+    );
+
+    const startTimeUTC = currentTimer.toISOString().slice(11, 19);
+    const endTimeUTC = windowEnd.toISOString().slice(11, 19);
 
     const blockRepo = this.dataSource.getRepository(WhatsappRoutineBlock);
-    const blocks = await blockRepo.find({
-      where: {
-        triggerTime: Between(now, windowEnd),
-      },
-      relations: ['routine', 'routine.user'],
-    });
+
+    this.logger.log(
+      `REALIZANDO SCAN => AGORA : ${startTimeUTC} ATÉ ${endTimeUTC}`,
+    );
+
+    const blocks = await blockRepo
+      .createQueryBuilder('block')
+      .where(
+        `
+      EXTRACT(HOUR FROM block.triggerTime AT TIME ZONE 'UTC') * 60 + 
+      EXTRACT(MINUTE FROM block.triggerTime AT TIME ZONE 'UTC') 
+      BETWEEN :startTime AND :endTime
+      AND block.sent = false
+      AND block.active = true`,
+
+        {
+          startTime: this.convertToMinutes(startTimeUTC),
+          endTime: this.convertToMinutes(endTimeUTC),
+        },
+      )
+      .leftJoinAndSelect('block.routine', 'routine')
+      .leftJoinAndSelect('routine.user', 'user')
+      .getMany();
 
     for (const block of blocks) {
-      // Você pode adicionar lógica para evitar re-enfileirar caso já exista job (verificação por jobId).
       try {
         await this.queueService.enqueueBlock(block.id, block.triggerTime);
+        await this.blocksService.update(block.id, { sent: true });
         this.logger.log(
           `Scheduled block ${block.id} at ${block.triggerTime.toDateString()}`,
         );

@@ -15,6 +15,6 @@ import { WhatsappController } from './controllers/whatsapp.controller';
   ],
   controllers: [IntegrationsController, WhatsappController],
   providers: [IntegrationsService, WhatsappService],
-  exports: [IntegrationsService],
+  exports: [IntegrationsService, WhatsappService],
 })
 export class IntegrationsModule {}

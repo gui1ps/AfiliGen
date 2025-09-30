@@ -36,10 +36,8 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
-# Evita download redundante do Chromium pelo Puppeteer
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 
-# Aponta o Chromium instalado para o Puppeteer
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 COPY package*.json ./

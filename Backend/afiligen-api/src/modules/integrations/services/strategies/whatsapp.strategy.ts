@@ -16,10 +16,11 @@ import { GroupChat } from 'whatsapp-web.js';
 import fs from 'fs';
 import path from 'path';
 
+const clients: Map<string, Client> = new Map();
+
 @Injectable()
 export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
   private readonly logger = new Logger(WhatsappService.name);
-  private clients: Map<string, Client> = new Map();
 
   constructor(
     private integrationsService: IntegrationsService,
@@ -61,7 +62,7 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
 
   async onApplicationShutdown(signal?: string) {
     this.logger.log(`App desligando (${signal}), destruindo clientes...`);
-    for (const [uuid, client] of this.clients) {
+    for (const [uuid, client] of clients) {
       await client.destroy();
       this.logger.log(`Cliente ${uuid} destruído`);
     }
@@ -77,7 +78,7 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
     if (!user)
       throw new NotFoundException(`User with uuid ${userUuid} not found`);
 
-    if (this.clients.has(userUuid)) {
+    if (clients.has(userUuid)) {
       this.logger.log(`Cliente já existente para usuário ${user.name}`);
       return { status: 'already_connected' };
     }
@@ -107,25 +108,32 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
       }
     }
 
-    const client = new Client({
-      puppeteer: {
-        headless: true,
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--single-process',
-          '--disable-gpu',
-        ],
-      },
-      authStrategy: new LocalAuth({
-        clientId: userUuid,
-      }),
-    });
+    let client: Client | null = null;
+    try {
+      client = new Client({
+        puppeteer: {
+          executablePath:
+            process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+          headless: true,
+          dumpio: true,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-background-timer-throttling',
+            '--disable-renderer-backgrounding',
+            '--disable-features=site-per-process',
+          ],
+        },
+        authStrategy: new LocalAuth({
+          clientId: userUuid,
+        }),
+      });
+    } catch (error) {
+      new ConflictException(`Unable to start client.`);
+    }
+
+    if (!client) return;
 
     return new Promise((resolve, reject) => {
       client.on('qr', async (qr) => {
@@ -149,12 +157,12 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
       });
 
       client.initialize().catch(reject);
-      this.clients.set(userUuid, client);
+      clients.set(userUuid, client);
     });
   }
 
   async disconnect(userUuid: string): Promise<void> {
-    const client = this.clients.get(userUuid);
+    const client = clients.get(userUuid);
     if (!client)
       throw new NotFoundException(`No client found for user uuid ${userUuid}`);
     const connectionState = await client.getState();
@@ -163,7 +171,7 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
       new ConflictException(`The client is not yet connected.`);
     }
     await client.destroy();
-    this.clients.delete(userUuid);
+    clients.delete(userUuid);
     const whatsappIntegration =
       await this.integrationsService.getUserIntegration(
         userUuid,
@@ -182,7 +190,7 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
     userUuid: string,
     dto: SendMessageDto,
   ): Promise<{ message: string }> {
-    const client = this.clients.get(userUuid);
+    const client = clients.get(userUuid);
     if (!client) {
       throw new NotFoundException(`No client found for user uuid ${userUuid}`);
     }
@@ -225,7 +233,7 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
   }
 
   async getChats(userUuid: string) {
-    const client = this.clients.get(userUuid);
+    const client = clients.get(userUuid);
     if (!client)
       throw new NotFoundException(`No client found for user uuid ${userUuid}`);
     const chats = await client.getChats();

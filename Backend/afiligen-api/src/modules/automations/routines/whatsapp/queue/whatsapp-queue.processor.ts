@@ -19,10 +19,6 @@ export class WhatsappQueueProcessor {
     private readonly queueService: WhatsappQueueService,
   ) {}
 
-  /**
-   * Job: send-block
-   * payload: { blockId }
-   */
   @Process('send-block')
   async handleSendBlock(job: Job<{ blockId: number }>) {
     const { blockId } = job.data;
@@ -30,7 +26,6 @@ export class WhatsappQueueProcessor {
       `Processing send-block job for block ${blockId} (job id ${job.id})`,
     );
 
-    // Carrega bloco + rotina + mensagens + recipients (assumindo relations configuradas)
     const block = await this.dataSource
       .getRepository(WhatsappRoutineBlock)
       .findOne({
@@ -49,7 +44,6 @@ export class WhatsappQueueProcessor {
       throw new NotFoundException('Routine not found');
     }
 
-    // Checa status da rotina (pausada, finalizada)
     if (routine.status !== 'active') {
       this.logger.warn(
         `Routine ${routine.id} is not active (status=${routine.status}). Skipping block ${blockId}`,
@@ -57,15 +51,14 @@ export class WhatsappQueueProcessor {
       return;
     }
 
-    // lista de recipients: se o block tiver override, use, senão use routine.recipients
     const recipients =
       (block as any).recipients && (block as any).recipients.length
         ? (block as any).recipients
         : (routine.recipients ?? []);
 
     // sequência simples: para cada recipient, enviar mensagens na ordem
-    for (const recipient of recipients) {
-      for (const message of block.messages ?? []) {
+    for (const message of block.messages ?? []) {
+      for (const recipient of recipients) {
         try {
           if (message.type === 'text') {
             await this.sender.sendMessage(routine.user.uuid, {
@@ -91,42 +84,12 @@ export class WhatsappQueueProcessor {
           );
           message.status = 'failed';
           await this.dataSource.getRepository(WhatsappMessage).save(message);
-          // dependendo da política, continue ou rethrow; aqui continuamos para próximos recipients/messages
         }
-        // intervalo entre mensagens conforme rotina
-        await this.sleep((routine.intervalSeconds || 1) * 1000);
       }
-      // opcional: intervalo entre recipients (pode ser menor ou 0)
-      await this.sleep(200); // pequeno gap
+      await this.sleep((routine.intervalSeconds || 1) * 1000);
     }
 
     this.logger.log(`Block ${blockId} processed successfully`);
-    // Ao final, se essa rotina for diária, re-agende o próximo envio do bloco (se aplicável)
-    await this.rescheduleNextOccurrence(block);
-  }
-
-  private async rescheduleNextOccurrence(block: WhatsappRoutineBlock) {
-    // Implementação simples: se rotina endAt undefined ou futura, calcule próxima triggerTime do bloco adicionando 1 dia
-    const routine = (block as any).routine as WhatsappRoutine;
-    if (!routine) return;
-
-    if (routine.endAt && new Date() > new Date(routine.endAt)) {
-      this.logger.log(
-        `Routine ${routine.id} ended. Not rescheduling block ${block.id}`,
-      );
-      return;
-    }
-
-    // exemplo: se o bloco.triggerTime representa hora do dia, incremente 1 dia
-    const next = new Date(block.triggerTime);
-    next.setDate(next.getDate() + 1);
-
-    // atualiza triggerTime na DB (opcional) ou apenas enfileira
-    await this.dataSource
-      .getRepository(WhatsappRoutineBlock)
-      .update({ id: block.id }, { triggerTime: next });
-    await this.queueService.enqueueBlock(block.id, next);
-    this.logger.log(`Block ${block.id} rescheduled to ${next.toISOString()}`);
   }
 
   private sleep(ms: number) {

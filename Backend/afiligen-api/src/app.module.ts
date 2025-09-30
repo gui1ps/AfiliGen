@@ -11,34 +11,48 @@ import { BullModule } from '@nestjs/bull';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      expandVariables: true,
+      cache: true,
     }),
 
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
+      useFactory: (cfg: ConfigService) => ({
         type: 'postgres',
-        host: configService.get<string>('DATABASE_HOST'),
-        port: configService.get<number>('DATABASE_PORT'),
-        username: configService.get<string>('DATABASE_USER'),
-        password: configService.get<string>('DATABASE_PASSWORD'),
-        database: configService.get<string>('DATABASE_NAME'),
+        host: cfg.get<string>('DATABASE_HOST'),
+        port: Number(cfg.get<string>('DATABASE_PORT') ?? 5432),
+        username: cfg.get<string>('DATABASE_USER'),
+        password: cfg.get<string>('DATABASE_PASSWORD'),
+        database: cfg.get<string>('DATABASE_NAME'),
         autoLoadEntities: true,
-        synchronize: true,
+        synchronize: true, // cuidado em produção
       }),
     }),
+
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        redis: {
-          host: configService.get<string>('REDIS_HOST'),
-          port: configService.get<number>('REDIS_PORT') || 6379,
-          password: configService.get<string>('REDIS_PASSWORD'),
-        },
-        prefix: configService.get<string>('BULL_PREFIX') || 'afiligen::bull',
-      }),
+      useFactory: (cfg: ConfigService) => {
+        const url = cfg.get<string>('REDIS_URL');
+        if (url) {
+          return {
+            // usa URL única
+            redis: url,
+            prefix: cfg.get<string>('BULL_PREFIX') ?? 'afiligen::bull',
+          };
+        }
+        return {
+          redis: {
+            host: cfg.get<string>('REDIS_HOST') ?? 'redis',
+            port: Number(cfg.get<string>('REDIS_PORT') ?? 6379),
+            password: cfg.get<string>('REDIS_PASSWORD') || undefined,
+          },
+          prefix: cfg.get<string>('BULL_PREFIX') ?? 'afiligen::bull',
+        };
+      },
     }),
+
     UserModule,
     AuthModule,
     IntegrationsModule,
