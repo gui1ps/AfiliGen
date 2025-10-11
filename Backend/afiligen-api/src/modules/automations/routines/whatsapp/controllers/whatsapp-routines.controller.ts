@@ -68,29 +68,19 @@ export class WhatsappRoutinesController {
     return this.routinesService.remove(userUuid, id);
   }
 
-  @Post(':routineId/blocks')
-  createBlock(
-    @Param('routineId') routineId: number,
-    @Body() dto: CreateWhatsappBlockDto,
-  ) {
-    return this.routinesService.addBlock(routineId, dto);
-  }
-
-  @Get(':routineId/blocks')
-  getBlocks(@Param('routineId') routineId: number) {
+  @Get(':id/blocks')
+  @Roles('user')
+  getBlocks(@Param('id') routineId: number) {
     return this.routinesService.getBlocks(routineId);
   }
 
-  @Post('blocks/:blockId/messages')
-  createMessage(
-    @Param('blockId') blockId: number,
+  @Post(':id/messages')
+  @Roles('user')
+  addMessage(
+    @Param('id') routineId: number,
+    @GetUser('userUuid') userUuid: string,
     @Body() dto: CreateWhatsappMessageDto,
   ) {
-    return this.routinesService.addMessage(blockId, dto);
-  }
-
-  @Get('blocks/:blockId/messages')
-  getMessages(@Param('blockId') blockId: number) {
-    return this.routinesService.getMessages(blockId);
+    return this.routinesService.addMessage(userUuid, routineId, dto);
   }
 }

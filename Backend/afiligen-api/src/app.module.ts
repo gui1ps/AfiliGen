@@ -37,7 +37,6 @@ import { BullModule } from '@nestjs/bull';
         const url = cfg.get<string>('REDIS_URL');
         if (url) {
           return {
-            // usa URL única
             redis: url,
             prefix: cfg.get<string>('BULL_PREFIX') ?? 'afiligen::bull',
           };

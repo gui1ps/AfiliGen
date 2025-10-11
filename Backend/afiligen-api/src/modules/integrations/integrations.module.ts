@@ -7,10 +7,15 @@ import { IntegrationsController } from './controllers/integrations.controller';
 import { UserModule } from 'src/modules/users/user.module';
 import { WhatsappService } from './services/strategies/whatsapp.strategy';
 import { WhatsappController } from './controllers/whatsapp.controller';
+import { WhatsappMessage } from '../automations/routines/whatsapp/entities/whatsapp-message.entity.ts';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Integration, IntegrationCredential]),
+    TypeOrmModule.forFeature([
+      Integration,
+      IntegrationCredential,
+      WhatsappMessage,
+    ]),
     UserModule,
   ],
   controllers: [IntegrationsController, WhatsappController],

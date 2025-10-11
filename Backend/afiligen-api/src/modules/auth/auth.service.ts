@@ -8,6 +8,7 @@ import { UserService } from '../users/user.service';
 import { User } from '../users/user.entity';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { ValidateTokenDto } from './dto/validate-token';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -59,6 +60,21 @@ export class AuthService {
     };
 
     return { access_token: this.jwtService.sign(payload) };
+  }
+
+  async validateToken(
+    validateTokenDto: ValidateTokenDto,
+  ): Promise<{ valid: boolean }> {
+    const token = validateTokenDto.token;
+    try {
+      const isValid = await this.jwtService.verifyAsync(token);
+      if (isValid) {
+        return { valid: true };
+      }
+      return { valid: false };
+    } catch (error) {
+      return { valid: false };
+    }
   }
 
   async register(registerUserDto: RegisterUserDto): Promise<User> {

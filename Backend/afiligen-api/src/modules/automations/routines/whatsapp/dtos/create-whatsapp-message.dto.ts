@@ -1,11 +1,12 @@
-import { IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsNumber } from 'class-validator';
 
 export class CreateWhatsappMessageDto {
-  @IsEnum(['text', 'media'])
-  type: 'text' | 'media';
-
   @IsString()
   content: string;
+
+  @IsString()
+  @IsOptional()
+  mediaPath?: string;
 
   @IsString()
   @IsOptional()

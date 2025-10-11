@@ -37,14 +37,19 @@ export class WhatsappRoutinesService {
     if (!user)
       throw new NotFoundException(`User with uuid ${userUuid} not found`);
 
+    const startDate = new Date(dto.startAt);
+    const now = new Date();
+
+    if (startDate < now) {
+      throw new BadRequestException('startAt must be greater than now');
+    }
+
     if (!dto.status) {
       dto.status = 'active';
     }
 
     if (dto.endAt) {
-      const startDate = new Date(dto.startAt);
       const endDate = new Date(dto.endAt);
-
       if (endDate <= startDate) {
         throw new BadRequestException('endAt must be greater than startAt');
       }
@@ -94,7 +99,7 @@ export class WhatsappRoutinesService {
   async findOne(userUuid: string, id: number): Promise<WhatsappRoutine> {
     const routine = await this.routineRepo.findOne({
       where: { id, user: { uuid: userUuid } },
-      relations: ['user'],
+      relations: ['user', 'messages'],
     });
 
     if (!routine) throw new NotFoundException(`Routine ${id} not found`);
@@ -150,32 +155,8 @@ export class WhatsappRoutinesService {
 
   async remove(userUuid: string, id: number): Promise<void> {
     const routine = await this.findOne(userUuid, id);
-    await this.routineRepo.remove(routine);
-  }
-
-  async addBlock(routineId: number, dto: CreateWhatsappBlockDto) {
-    const routine = await this.routineRepo.findOne({
-      where: { id: routineId },
-      relations: ['chatAppMessageBlock'],
-    });
     if (!routine) throw new NotFoundException('Routine not found');
-    const routineBlocks = routine.chatAppMessageBlock;
-    if (routineBlocks.length > 0) {
-      const newBlockTriggerTime = new Date(dto.triggerTime);
-      let existingBlockTriggerTime: Date;
-      for (const block of routineBlocks) {
-        existingBlockTriggerTime = new Date(block.triggerTime);
-        if (
-          newBlockTriggerTime.getTime() === existingBlockTriggerTime.getTime()
-        ) {
-          throw new BadRequestException(
-            'A block with the same trigger time already exists',
-          );
-        }
-      }
-    }
-    const block = this.blockRepo.create({ ...dto, routine });
-    return this.blockRepo.save(block);
+    await this.routineRepo.remove(routine);
   }
 
   async getBlocks(routineId: number) {
@@ -189,19 +170,23 @@ export class WhatsappRoutinesService {
     });
   }
 
-  async addMessage(blockId: number, dto: CreateWhatsappMessageDto) {
-    const block = await this.blockRepo.findOneBy({ id: blockId });
-    if (!block) throw new NotFoundException('Block not found');
+  async addMessage(
+    userUuid: string,
+    routineId: number,
+    message: CreateWhatsappMessageDto,
+  ) {
+    const user = await this.userService.findOne(userUuid);
+    if (!user)
+      throw new NotFoundException(`User with uuid ${userUuid} not found`);
 
-    const message = this.messageRepo.create({ ...dto, block });
-    return this.messageRepo.save(message);
-  }
-
-  async getMessages(blockId: number) {
-    const block = await this.blockRepo.findOneBy({ id: blockId });
-    if (!block) throw new NotFoundException('Block not found');
-    return this.messageRepo.find({
-      where: { block: { id: blockId } },
+    const routine = await this.routineRepo.findOne({
+      where: { id: routineId, user: { uuid: userUuid } },
     });
+
+    if (!routine) throw new NotFoundException(`Routine ${routineId} not found`);
+
+    const entity = this.messageRepo.create({ ...message, routine });
+    const createdMessage = await this.messageRepo.save(entity);
+    return createdMessage;
   }
 }

@@ -3,6 +3,7 @@ import { AuthService } from './auth.service';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { ValidateTokenDto } from './dto/validate-token';
 
 @Controller('auth')
 export class AuthController {
@@ -16,6 +17,11 @@ export class AuthController {
   @Post('login')
   async login(@Body() loginUserDto: LoginUserDto) {
     return this.authService.login(loginUserDto);
+  }
+
+  @Post('validate-token')
+  async validateToken(@Body() validateTokenDto: ValidateTokenDto) {
+    return this.authService.validateToken(validateTokenDto);
   }
 
   @UseGuards(JwtAuthGuard)

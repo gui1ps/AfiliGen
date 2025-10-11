@@ -1,4 +1,14 @@
-import { IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsString,
+  IsNotEmpty,
+  ValidateNested,
+  IsOptional,
+  IsArray,
+  IsBoolean,
+  IsIn,
+} from 'class-validator';
+import { CreateWhatsappMessageDto } from 'src/modules/automations/routines/whatsapp/dtos/create-whatsapp-message.dto';
 
 interface SendMessageOption {
   mentions?: {
@@ -9,10 +19,12 @@ interface SendMessageOption {
 
 export class SendMessageDto {
   @IsString()
+  @IsNotEmpty()
   chatId: string;
 
-  @IsString()
-  message: string;
+  @ValidateNested()
+  @Type(() => CreateWhatsappMessageDto)
+  message: CreateWhatsappMessageDto;
 
   @IsOptional()
   options?: SendMessageOption;

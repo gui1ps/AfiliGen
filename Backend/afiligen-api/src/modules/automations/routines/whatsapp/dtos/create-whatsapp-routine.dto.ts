@@ -9,6 +9,7 @@ import {
   IsInt,
   Min,
   ValidateNested,
+  IsPositive,
 } from 'class-validator';
 
 import { Type } from 'class-transformer';
@@ -47,4 +48,8 @@ export class CreateWhatsappRoutineDto {
   @ValidateNested({ each: true })
   @Type(() => CreateWhatsappMessageDto)
   messages?: CreateWhatsappMessageDto[];
+
+  @IsPositive()
+  @IsOptional()
+  maxMessagesPerBlock?: number;
 }

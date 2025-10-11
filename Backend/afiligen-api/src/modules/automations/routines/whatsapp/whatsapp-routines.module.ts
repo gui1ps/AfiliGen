@@ -9,6 +9,8 @@ import { WhatsappMessage } from './entities/whatsapp-message.entity.ts';
 import { BaseChatAppRoutineBlock } from '../entities/base-chat-app-routine-block';
 import { WhatsappRoutineBlock } from './entities/whatsapp-routine-block';
 import { WhatsappQueueModule } from './queue/whatsapp-queue.module';
+import { WhatsappRoutinesBlocksController } from './controllers/whatsapp-routines-blocks.controller';
+import { WhatsappRoutineBlocksService } from './services/whatsapp-routine-block.service';
 
 @Module({
   imports: [
@@ -22,8 +24,8 @@ import { WhatsappQueueModule } from './queue/whatsapp-queue.module';
     UserModule,
     WhatsappQueueModule,
   ],
-  providers: [WhatsappRoutinesService],
-  controllers: [WhatsappRoutinesController],
-  exports: [WhatsappRoutinesService],
+  providers: [WhatsappRoutinesService, WhatsappRoutineBlocksService],
+  controllers: [WhatsappRoutinesController, WhatsappRoutinesBlocksController],
+  exports: [WhatsappRoutinesService, WhatsappRoutineBlocksService],
 })
 export class WhatsappRoutinesModule {}

@@ -34,8 +34,8 @@ export class WhatsappController {
   @Roles('user')
   async sendMessage(
     @GetUser('userUuid') userUuid: string,
-    @Body() sendMessageDto: SendMessageDto,
+    @Body() dto: SendMessageDto,
   ) {
-    return this.whatsappService.sendMessage(userUuid, sendMessageDto);
+    return this.whatsappService.sendMessage(userUuid, dto);
   }
 }

@@ -1,12 +1,13 @@
 import { Processor, Process } from '@nestjs/bull';
 import type { Job } from 'bull';
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { Repository } from 'typeorm';
 import { WhatsappRoutineBlock } from '../entities/whatsapp-routine-block';
 import { WhatsappRoutine } from '../entities/whatsapp-routine.entity';
 import { WhatsappMessage } from '../entities/whatsapp-message.entity.ts';
 import { WhatsappService } from 'src/modules/integrations/services/strategies/whatsapp.strategy';
 import { WhatsappQueueService } from './whatsapp-queue.service';
+import { InjectRepository } from '@nestjs/typeorm';
 
 @Processor('whatsapp')
 @Injectable()
@@ -14,9 +15,14 @@ export class WhatsappQueueProcessor {
   private readonly logger = new Logger(WhatsappQueueProcessor.name);
 
   constructor(
-    private dataSource: DataSource,
     private readonly sender: WhatsappService,
     private readonly queueService: WhatsappQueueService,
+
+    @InjectRepository(WhatsappRoutineBlock)
+    private readonly blockRepo: Repository<WhatsappRoutineBlock>,
+
+    @InjectRepository(WhatsappMessage)
+    private readonly messagesRepo: Repository<WhatsappMessage>,
   ) {}
 
   @Process('send-block')
@@ -26,12 +32,10 @@ export class WhatsappQueueProcessor {
       `Processing send-block job for block ${blockId} (job id ${job.id})`,
     );
 
-    const block = await this.dataSource
-      .getRepository(WhatsappRoutineBlock)
-      .findOne({
-        where: { id: blockId },
-        relations: ['routine', 'messages', 'routine.user'],
-      });
+    const block = await this.blockRepo.findOne({
+      where: { id: blockId },
+      relations: ['routine', 'messages', 'routine.user', 'routine.messages'],
+    });
 
     if (!block) {
       this.logger.error(`Block ${blockId} not found`);
@@ -44,6 +48,8 @@ export class WhatsappQueueProcessor {
       throw new NotFoundException('Routine not found');
     }
 
+    this.logger.log(JSON.stringify(routine.messages));
+
     if (routine.status !== 'active') {
       this.logger.warn(
         `Routine ${routine.id} is not active (status=${routine.status}). Skipping block ${blockId}`,
@@ -51,39 +57,48 @@ export class WhatsappQueueProcessor {
       return;
     }
 
-    const recipients =
-      (block as any).recipients && (block as any).recipients.length
-        ? (block as any).recipients
-        : (routine.recipients ?? []);
+    const blockMessages = block.messages ?? [];
 
-    // sequência simples: para cada recipient, enviar mensagens na ordem
-    for (const message of block.messages ?? []) {
+    const messages = routine.messages ?? [];
+    const { lastSentMessageIndex, maxMessagesPerBlock } = routine;
+
+    const nextMessageIndex = lastSentMessageIndex + 1;
+    const endMessageIndex = nextMessageIndex + maxMessagesPerBlock;
+
+    const nextMessagesToSend = messages.slice(
+      nextMessageIndex,
+      endMessageIndex,
+    );
+
+    this.logger.log(
+      `LISTA DE MENSAGEM ROTINA: ${JSON.stringify(nextMessagesToSend)}`,
+    );
+
+    if (nextMessagesToSend.length > 0) {
+      blockMessages.push(...nextMessagesToSend);
+    }
+
+    const recipients = routine.recipients ?? [];
+
+    this.logger.log(
+      `LISTA DE MENSAGEM TOTAL: ${JSON.stringify(blockMessages)}`,
+    );
+
+    for (const message of blockMessages ?? []) {
       for (const recipient of recipients) {
         try {
-          if (message.type === 'text') {
-            await this.sender.sendMessage(routine.user.uuid, {
-              chatId: recipient,
-              message: message.content,
-            });
-          }
-          /*} else {
-            await this.sender.sendMedia(
-              routine.user.uuid,
-              recipient,
-              message.content,
-              message.mimeType,
-              message.caption,
-            );
-          }*/
-          // atualizar status da message (opcional: por mensagem por recipient? aqui atualiza entidade message como 'sent')
+          await this.sender.sendMessage(routine.user.uuid, {
+            chatId: recipient,
+            message: message,
+          });
           message.status = 'sent';
-          await this.dataSource.getRepository(WhatsappMessage).save(message);
+          await this.messagesRepo.save(message);
         } catch (err) {
           this.logger.error(
             `Failed to send message ${message.id} to ${recipient}: ${err.message || err}`,
           );
           message.status = 'failed';
-          await this.dataSource.getRepository(WhatsappMessage).save(message);
+          await this.messagesRepo.save(message);
         }
       }
       await this.sleep((routine.intervalSeconds || 1) * 1000);

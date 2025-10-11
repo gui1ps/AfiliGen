@@ -23,15 +23,15 @@ services:
       redis-server
       --appendonly yes
       --save 60 1000
-      --requirepass ${REDIS_PASSWORD}
+      --requirepass AfiligenRedis1234567891020
     env_file:
       - ./Backend/afiligen-api/.env
     ports:
       - "6379:6379"
-    volumes:
-      - redis_data:/data
+    #volumes:
+    #  - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "PING"]
+      test: ["CMD", "redis-cli", "-a", "AfiligenRedis1234567891020", "PING"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -56,6 +56,28 @@ services:
       - ./Backend/afiligen-api:/usr/src/app
       - /usr/src/app/node_modules
     command: npm run start:dev
+    networks:
+      - afiligen_network
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+
+  afiligen-frontend:
+    build:
+      context: ./Frontend/afiligen
+      dockerfile: Dockerfile
+    container_name: afiligen_frontend
+    restart: always
+    depends_on:
+      - afiligen-api
+    env_file:
+      - ./Frontend/afiligen/.env
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./Frontend/afiligen:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm start
     networks:
       - afiligen_network
     dns:

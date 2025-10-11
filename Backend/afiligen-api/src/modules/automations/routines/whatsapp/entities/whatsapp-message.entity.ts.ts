@@ -5,11 +5,11 @@ import { WhatsappRoutine } from './whatsapp-routine.entity';
 
 @Entity('whatsapp_messages')
 export class WhatsappMessage extends BaseEntity {
-  @Column()
-  type: 'text' | 'media';
-
   @Column({ type: 'text' })
   content: string;
+
+  @Column({ type: 'text', nullable: true })
+  mediaPath?: string;
 
   @Column({ nullable: true })
   mimeType?: string;

@@ -1,5 +1,5 @@
 import { IntegrationsService } from '../integrations.service';
-import { Client, LocalAuth } from 'whatsapp-web.js';
+import { Client, LocalAuth, MessageMedia } from 'whatsapp-web.js';
 import {
   Injectable,
   Logger,
@@ -11,10 +11,14 @@ import {
 } from '@nestjs/common';
 import { UserService } from 'src/modules/users/user.service';
 import * as qrcode from 'qrcode-terminal';
-import { SendMessageDto } from '../../dtos/whatsapp-message.dto';
+import { WhatsappMessage } from 'src/modules/automations/routines/whatsapp/entities/whatsapp-message.entity.ts';
 import { GroupChat } from 'whatsapp-web.js';
 import fs from 'fs';
 import path from 'path';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { SendMessageDto } from '../../dtos/whatsapp-message.dto';
+import { resolveMediaPath } from 'src/utils/media-path-resolver';
 
 const clients: Map<string, Client> = new Map();
 
@@ -23,6 +27,9 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
   private readonly logger = new Logger(WhatsappService.name);
 
   constructor(
+    @InjectRepository(WhatsappMessage)
+    private messagesRepo: Repository<WhatsappMessage>,
+
     private integrationsService: IntegrationsService,
     private userService: UserService,
   ) {}
@@ -45,19 +52,28 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
     }
   }
 
-  async onModuleInit() {
+  async iterateSessionFiles(callback: (folderPath: string) => Promise<void>) {
     const sessionsDir = path.join(process.cwd(), '.wwebjs_auth');
     if (fs.existsSync(sessionsDir)) {
       const sessionFolders = fs.readdirSync(sessionsDir);
+      if (sessionFolders.length === 0) return;
       for (const folder of sessionFolders) {
         const folderPath = path.join(sessionsDir, folder);
-        try {
-          await fs.promises.rm(folderPath, { force: true, recursive: true });
-        } catch (err) {
-          this.logger.log(`Erro ao apgar a pasta ${folderPath}`);
-        }
+        await callback(folderPath);
       }
     }
+  }
+
+  async onModuleInit() {
+    this.logger.log('Apagando sessões antigas');
+    await this.iterateSessionFiles(async (folderPath) => {
+      const splitedPath = folderPath.split('/');
+      const userUuid = splitedPath[splitedPath.length - 1].replace(
+        'session-',
+        '',
+      );
+      await this.deleteSession(userUuid);
+    });
   }
 
   async onApplicationShutdown(signal?: string) {
@@ -127,6 +143,7 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
         },
         authStrategy: new LocalAuth({
           clientId: userUuid,
+          dataPath: path.join(process.cwd(), '.wwebjs_auth'),
         }),
       });
     } catch (error) {
@@ -202,6 +219,7 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
 
     try {
       let mentions: string[] = [];
+      let media: MessageMedia | undefined = undefined;
 
       if (dto.options?.mentions) {
         const who = dto.options.mentions.who;
@@ -222,7 +240,42 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
           }
         }
       }
-      await client.sendMessage(dto.chatId, dto.message, { mentions });
+
+      if (dto.message.mediaPath) {
+        const img = [
+          'image/jpeg',
+          'image/png',
+          'image/webp',
+          'image/gif',
+          'image/webp',
+        ];
+        const video = ['video/mp4', 'video/mov', 'video/webm', 'video/mkv'];
+        let fileType: 'img' | 'video' = 'img';
+        const mimeType = dto.message.mimeType;
+        if (mimeType) {
+          if (img.includes(mimeType)) {
+            fileType = 'img';
+          } else if (video.includes(mimeType)) {
+            fileType = 'video';
+          }
+        }
+        const solvedMedia = await resolveMediaPath(
+          dto.message.mediaPath,
+          'whatsapp',
+          fileType,
+        );
+        if (!solvedMedia)
+          throw new BadRequestException(
+            'Could not retrieve the requested media file',
+          );
+        const mediaAbsPath = solvedMedia.absPath;
+        media = MessageMedia.fromFilePath(mediaAbsPath);
+      }
+
+      await client.sendMessage(dto.chatId, dto.message.content, {
+        mentions,
+        media,
+      });
 
       return { message: 'Mensagem enviada com sucesso' };
     } catch (err) {
@@ -236,7 +289,11 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
     const client = clients.get(userUuid);
     if (!client)
       throw new NotFoundException(`No client found for user uuid ${userUuid}`);
-    const chats = await client.getChats();
-    return chats;
+    try {
+      const chats = await client.getChats();
+      return chats;
+    } catch (error) {
+      throw new ConflictException('Unable to retrieve contacts');
+    }
   }
 }

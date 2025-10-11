@@ -8,7 +8,8 @@ import {
   Min,
   IsNotEmpty,
   ValidateNested,
-  ArrayNotEmpty
+  ArrayNotEmpty,
+  IsPositive,
 } from 'class-validator';
 
 import { Type } from 'class-transformer';
@@ -57,14 +58,22 @@ export class UpdateWhatsappRoutineDto {
 
   @IsArray()
   @IsOptional()
-  @IsNotEmpty({each:true})
+  @IsNotEmpty({ each: true })
   @ArrayNotEmpty()
   recipients?: string[];
 
   @IsArray()
   @ValidateNested({ each: true })
-  @IsNotEmpty({each:true})
+  @IsNotEmpty({ each: true })
   @ArrayNotEmpty()
   @Type(() => Message)
   messages: Message[];
+
+  @IsPositive()
+  @IsOptional()
+  last_sent_message_index?: number;
+
+  @IsPositive()
+  @IsOptional()
+  max_messages_per_block?: number;
 }
