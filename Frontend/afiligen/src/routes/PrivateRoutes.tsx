@@ -14,10 +14,10 @@ function PrivateRoutes() {
 
       try {
         const response = await validateToken(access_token);
-        if(response.valid){
-            setIsValid(response.valid);
-        }else{
-            setIsValid(false);
+        if (response.valid) {
+          setIsValid(response.valid);
+        } else {
+          setIsValid(false);
         }
       } catch (err) {
         setIsValid(false);

@@ -1,37 +1,34 @@
-import axios from 'axios'
+import axios from 'axios';
 
 const api = axios.create({
-    baseURL:'http://localhost:3000',
-    timeout: 30000, 
-    headers: {
-        'Content-Type': 'application/json'
-    },
-})
+  baseURL: 'http://localhost:3000',
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-const unprotectedRoutes = [
-  '/auth/register',
-  '/auth/login',
-]
+const unprotectedRoutes = ['/auth/register', '/auth/login'];
 
 api.interceptors.request.use(
   (config) => {
-    const url = config.url
-    if (!url) return config
+    const url = config.url;
+    if (!url) return config;
 
-    const isProtected = !unprotectedRoutes.includes(url)
-    
+    const isProtected = !unprotectedRoutes.includes(url);
+
     if (isProtected) {
-      const token = localStorage.getItem('access_token')
+      const token = localStorage.getItem('access_token');
       if (token) {
-        config.headers['Authorization'] = `Bearer ${token}`
+        config.headers['Authorization'] = `Bearer ${token}`;
       }
     }
 
-    return config
+    return config;
   },
   (error) => {
-    return Promise.reject(error)
-  }
-)
+    return Promise.reject(error);
+  },
+);
 
-export default api
+export default api;

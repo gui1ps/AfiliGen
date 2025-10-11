@@ -1,6 +1,6 @@
-import { createTheme } from "@mui/material/styles";
-import { palette } from "./palette";
-import { typography } from "./typography";
+import { createTheme } from '@mui/material/styles';
+import { palette } from './palette';
+import { typography } from './typography';
 
 export const theme = createTheme({
   palette,
@@ -13,23 +13,23 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          textTransform: "none",
-          padding: "15px 20px",
+          textTransform: 'none',
+          padding: '15px 20px',
         },
-        textSizeSmall:true,
-      },     
+        textSizeSmall: true,
+      },
     },
-    MuiLink:{
-      styleOverrides:{
-        root:{
-          textDecoration:"none"
-        }
-      }
+    MuiLink: {
+      styleOverrides: {
+        root: {
+          textDecoration: 'none',
+        },
+      },
     },
     MuiTextField: {
       styleOverrides: {
         root: {
-          "& .MuiOutlinedInput-root": {
+          '& .MuiOutlinedInput-root': {
             borderRadius: 10,
           },
         },
