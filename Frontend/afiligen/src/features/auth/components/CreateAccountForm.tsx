@@ -140,14 +140,11 @@ function CreateAccountForm() {
         focused={true}
         disabled={confirmPasswordDisabled}
         color={passwordMatch ? 'primary' : 'error'}
-        {...register('confirm-password', {
-          required: true,
-          onChange: (e) => {
-            const trimmedValue = e.target.value.trim();
-            setPasswordMatch(trimmedValue === password);
-            setConfirmePassword(trimmedValue);
-          },
-        })}
+        onChange={(e) => {
+          const trimmedValue = e.target.value.trim();
+          setPasswordMatch(trimmedValue === password);
+          setConfirmePassword(trimmedValue);
+        }}
         slotProps={{
           input: {
             endAdornment: (

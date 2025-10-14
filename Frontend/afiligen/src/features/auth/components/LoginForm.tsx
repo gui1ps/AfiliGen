@@ -29,7 +29,7 @@ function LoginForm() {
       onSubmit={handleSubmit(async (data) => {
         const login = await handleLogin(data as Credentials);
         if (login.success) {
-          navigate('/dashboard');
+          navigate('/home');
           toast.success(`${login.message}`);
         } else {
           toast.error(`${login.message}`);

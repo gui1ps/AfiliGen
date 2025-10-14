@@ -3,17 +3,22 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
 import LoginPage from '../features/auth/pages/LoginPage';
 import CreateAccountPage from '../features/auth/pages/CreateAccountPage';
-import Dashboard from '../features/dashboard/Dashboard';
+import Home from '../features/home/Home';
 import PrivateRoutes from './PrivateRoutes';
+import PublicRoutes from './PublicRoutes';
 import { ToastContainer } from 'react-toastify';
+import Integrations from '../features/integrations/Integrations';
 const AppRoutes = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<LoginPage />} />
+        <Route element={<PublicRoutes />}>
+          <Route path="/" element={<LoginPage />} />
+        </Route>
         <Route path="/create-account" element={<CreateAccountPage />} />
         <Route element={<PrivateRoutes />}>
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/integrations" element={<Integrations />} />
         </Route>
       </Routes>
       <ToastContainer
