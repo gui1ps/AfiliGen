@@ -70,5 +70,20 @@ export function useAuth() {
     [],
   );
 
-  return { handleLogin, handleCreateAccount, loading };
+  const handleLogout = useCallback((): AuthResponse => {
+    try {
+      localStorage.clear();
+      return {
+        success: true,
+        message: 'Storage limpo.',
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Falha ao limpar storage.',
+      };
+    }
+  }, []);
+
+  return { handleLogin, handleCreateAccount, handleLogout, loading };
 }

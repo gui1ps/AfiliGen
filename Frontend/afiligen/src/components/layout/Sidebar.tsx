@@ -14,6 +14,9 @@ import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import React, { useState } from 'react';
 import { useLocation, Link } from 'react-router-dom';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useAuth } from '../../features/auth/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   open: boolean;
@@ -36,6 +39,8 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const headerHeight = isMobile ? 56 : 64;
   const location = useLocation();
+  const { handleLogout } = useAuth();
+  const navigate = useNavigate();
 
   const [selectedIndex, setSelectedIndex] = useState(() => {
     const path = location.pathname;
@@ -160,8 +165,47 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
           justifyContent: 'center',
           p: 1.5,
           height: headerHeight,
+          borderTop: '1px solid rgba(255, 255, 255, 0.2)',
         }}
-      ></Box>
+      >
+        <ListItem disablePadding sx={{ width: '100%' }}>
+          <ListItemButton
+            onClick={() => {
+              const logout = handleLogout();
+              if (logout.success) navigate('/');
+            }}
+            sx={{
+              justifyContent: 'initial',
+              px: 2.5,
+              color: 'inherit',
+              opacity: 0.8,
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.35)',
+              },
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                minWidth: 0,
+                mr: 3,
+                justifyContent: 'center',
+                color: 'inherit',
+              }}
+            >
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText
+              primary="Sair"
+              sx={{
+                opacity: 1,
+                transition: 'all 0.3s ease',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+              }}
+            />
+          </ListItemButton>
+        </ListItem>
+      </Box>
     </Drawer>
   );
 }

@@ -59,7 +59,7 @@ export default function BaseLayout({ children }: PropsWithChildren) {
             flexGrow: 1,
             height: '100vh',
             bgcolor: theme.palette.primary.main,
-            p: isMobile ? 0 : (theme) => theme.spacing(2, 2, 2, 0),
+            p: isMobile ? 0 : (theme) => theme.spacing(1, 1, 1, 0),
           }}
         >
           <Box
@@ -71,7 +71,7 @@ export default function BaseLayout({ children }: PropsWithChildren) {
               overflowX: 'hidden',
               backgroundColor: theme.palette.background.paper,
               borderRadius: isMobile ? 0 : 6,
-              p: 2,
+              p: 4,
               boxSizing: 'border-box',
               transition: (theme) =>
                 theme.transitions.create(['width', 'border-radius'], {

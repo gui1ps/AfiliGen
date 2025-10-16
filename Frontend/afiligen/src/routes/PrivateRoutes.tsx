@@ -28,7 +28,7 @@ function PrivateRoutes() {
   }, []);
 
   if (isValid === null) {
-    return <div>Carregando...</div>;
+    return <></>;
   }
 
   return isValid ? <Outlet /> : <Navigate to="/" replace />;

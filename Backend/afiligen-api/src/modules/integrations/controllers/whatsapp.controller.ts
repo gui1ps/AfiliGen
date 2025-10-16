@@ -24,6 +24,13 @@ export class WhatsappController {
   async newClient(@GetUser('userUuid') userUuid: string) {
     return this.whatsappService.connect(userUuid);
   }
+
+  @Get('disconnect')
+  @Roles('user')
+  async disconnect(@GetUser('userUuid') userUuid: string) {
+    return this.whatsappService.disconnect(userUuid);
+  }
+
   @Get('chats')
   @Roles('user')
   async getChats(@GetUser('userUuid') userUuid: string) {

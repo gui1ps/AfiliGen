@@ -124,6 +124,8 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
       }
     }
 
+    await this.deleteSession(userUuid);
+
     let client: Client | null = null;
     try {
       client = new Client({
@@ -166,6 +168,7 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
       });
 
       client.on('ready', async () => {
+        clients.set(userUuid, client);
         this.logger.log(`WhatsApp conectado para usuário ${user.name}`);
       });
 
@@ -174,7 +177,6 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
       });
 
       client.initialize().catch(reject);
-      clients.set(userUuid, client);
     });
   }
 

@@ -3,11 +3,11 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { Routes, Route } from 'react-router-dom';
 import LoginPage from '../features/auth/pages/LoginPage';
 import CreateAccountPage from '../features/auth/pages/CreateAccountPage';
-import Home from '../features/home/Home';
+import Home from '../features/home/pages/Home';
 import PrivateRoutes from './PrivateRoutes';
 import PublicRoutes from './PublicRoutes';
 import { ToastContainer } from 'react-toastify';
-import Integrations from '../features/integrations/Integrations';
+import Integrations from '../features/integrations/pages/Integrations';
 const AppRoutes = () => {
   return (
     <Router>
