@@ -1,12 +1,11 @@
-import * as React from 'react';
 import { Button } from '@mui/material';
 import { BaseModal } from './BaseModal';
-import { useState } from 'react';
-import {
-  connect,
-  disconnect,
-} from '../../../../services/integrations/whatsapp';
+import { useWhatsapp } from '../../hooks/useWhatsapp';
+import Box from '@mui/material/Box';
 import { QRCodeCanvas } from 'qrcode.react';
+import Skeleton from '@mui/material/Skeleton';
+import { useEffect } from 'react';
+import Avatar from '@mui/material/Avatar';
 
 type EditProfileModalProps = {
   open: boolean;
@@ -14,33 +13,14 @@ type EditProfileModalProps = {
 };
 
 export function WhatsappModal({ open, onClose }: EditProfileModalProps) {
-  const [qr, setQr] = useState<string | null>(null);
-
-  const handleWhatsappConnection = async () => {
-    try {
-      const qr = await connect();
-      if (qr) setQr(qr);
-      return;
-    } catch (error) {
-      alert(error);
-    }
-  };
-
-  const handleWhatsappDisconnection = async () => {
-    try {
-      await disconnect();
-      setQr(null);
-    } catch (error) {
-      alert(error);
-    }
-  };
-
-  const showQrCode = () => {
-    if (qr) {
-      return <QRCodeCanvas value={qr} size={256} />;
-    }
-    return <p>Carregando...</p>;
-  };
+  const {
+    isLoading,
+    qr,
+    profile,
+    handleWhatsappConnection,
+    handleWhatsappDisconnection,
+    status,
+  } = useWhatsapp();
 
   return (
     <BaseModal
@@ -53,7 +33,7 @@ export function WhatsappModal({ open, onClose }: EditProfileModalProps) {
       actions={
         <>
           <Button onClick={handleWhatsappConnection} variant="outlined">
-            Conectar
+            QR Code
           </Button>
           <Button variant="contained" onClick={handleWhatsappDisconnection}>
             Desconectar
@@ -61,7 +41,26 @@ export function WhatsappModal({ open, onClose }: EditProfileModalProps) {
         </>
       }
     >
-      {showQrCode()}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: '100%',
+          height: 256,
+        }}
+      >
+        {isLoading && (
+          <Skeleton variant="rectangular" width={256} height={256} />
+        )}
+        {!profile && !isLoading && qr && <QRCodeCanvas value={qr} size={256} />}
+        {profile && (
+          <Avatar
+            src={profile.profilePic as string}
+            sx={{ width: 70, height: 70 }}
+          />
+        )}
+      </Box>
     </BaseModal>
   );
 }

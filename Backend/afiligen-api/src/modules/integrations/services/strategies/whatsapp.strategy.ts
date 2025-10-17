@@ -184,7 +184,6 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
     const client = clients.get(userUuid);
     if (!client)
       throw new NotFoundException(`No client found for user uuid ${userUuid}`);
-    const connectionState = await client.getState();
     const clientState = await this.checkClientState(client);
     if (clientState !== 'CONNECTED') {
       new ConflictException(`The client is not yet connected.`);
@@ -297,5 +296,45 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
     } catch (error) {
       throw new ConflictException('Unable to retrieve contacts');
     }
+  }
+
+  async getStatus(userUuid: string) {
+    const client = clients.get(userUuid);
+    if (!client)
+      throw new NotFoundException(`No client found for user uuid ${userUuid}`);
+    const status = await this.checkClientState(client);
+    if (!status) return { status: 'UNPAIRED' };
+    return { status };
+  }
+
+  async getLoggedProfile(userUuid: string) {
+    const client = clients.get(userUuid);
+    if (!client)
+      throw new NotFoundException(`No client found for user uuid ${userUuid}`);
+
+    const pushname = client.info.pushname || null;
+    const wid = client.info.wid;
+    const id = wid && (wid._serialized || wid);
+
+    let profilePic: string | null = null;
+    try {
+      const picUrl = await client
+        .getProfilePicUrl(id as string)
+        .catch(() => null);
+      if (picUrl) {
+        const res = await fetch(picUrl);
+        if (res.ok) {
+          const buf = await res.arrayBuffer();
+          const ct = res.headers.get('content-type') || 'image/jpeg';
+          profilePic = `data:${ct};base64,${Buffer.from(buf).toString('base64')}`;
+        }
+      }
+    } catch (e) {}
+
+    return {
+      id,
+      pushname,
+      profilePic,
+    };
   }
 }
