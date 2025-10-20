@@ -16,15 +16,17 @@ import { GroupChat } from 'whatsapp-web.js';
 import fs from 'fs';
 import path from 'path';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, UsingJoinColumnIsNotAllowedError } from 'typeorm';
 import { SendMessageDto } from '../../dtos/whatsapp-message.dto';
 import { resolveMediaPath } from 'src/utils/media-path-resolver';
+import { Subject } from 'rxjs';
 
 const clients: Map<string, Client> = new Map();
 
 @Injectable()
 export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
   private readonly logger = new Logger(WhatsappService.name);
+  private subjects: Map<string, Subject<{ status: string }>> = new Map();
 
   constructor(
     @InjectRepository(WhatsappMessage)
@@ -156,52 +158,28 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
 
     return new Promise((resolve, reject) => {
       client.on('qr', async (qr) => {
-        this.logger.log(`QR gerado para usuário ${user.name}`);
-        qrcode.generate(qr, { small: true });
-        resolve({ qr, status: 'scan_required' });
+        resolve({ qr });
       });
 
       client.on('auth_failure', async (msg) => {
-        this.logger.error(`Falha de autenticação para ${userUuid}: ${msg}`);
-        await this.disconnect(userUuid);
+        this.sendStatus(userUuid, 'AUTHENTICATION_FAILURE');
+        await client.destroy();
         await this.deleteSession(userUuid);
       });
 
       client.on('ready', async () => {
+        this.sendStatus(userUuid, 'CONNECTED');
         clients.set(userUuid, client);
-        this.logger.log(`WhatsApp conectado para usuário ${user.name}`);
       });
 
       client.on('disconnected', async () => {
-        await this.disconnect(userUuid);
+        this.sendStatus(userUuid, 'DISCONNECTED');
+        await client.destroy();
+        clients.delete(userUuid);
       });
 
       client.initialize().catch(reject);
     });
-  }
-
-  async disconnect(userUuid: string): Promise<void> {
-    const client = clients.get(userUuid);
-    if (!client)
-      throw new NotFoundException(`No client found for user uuid ${userUuid}`);
-    const clientState = await this.checkClientState(client);
-    if (clientState !== 'CONNECTED') {
-      new ConflictException(`The client is not yet connected.`);
-    }
-    await client.destroy();
-    clients.delete(userUuid);
-    const whatsappIntegration =
-      await this.integrationsService.getUserIntegration(
-        userUuid,
-        undefined,
-        'whatsapp',
-      );
-    await this.integrationsService.updateIntegrationStatus(
-      userUuid,
-      whatsappIntegration.id,
-      { status: 'inactive' },
-    );
-    this.logger.log(`Cliente desconectado para ${userUuid}`);
   }
 
   async sendMessage(
@@ -302,9 +280,27 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
     const client = clients.get(userUuid);
     if (!client)
       throw new NotFoundException(`No client found for user uuid ${userUuid}`);
-    const status = await this.checkClientState(client);
-    if (!status) return { status: 'UNPAIRED' };
-    return { status };
+    try {
+      const status = await this.checkClientState(client);
+      if (!status) return { status: 'UNPAIRED' };
+      return { status };
+    } catch (error) {
+      throw new ConflictException('Unable to retrieve status');
+    }
+  }
+
+  getSubject(userUuid: string): Subject<{ status: string }> {
+    let subject = this.subjects.get(userUuid);
+    if (!subject) {
+      subject = new Subject<{ status: string }>();
+      this.subjects.set(userUuid, subject);
+    }
+    return subject;
+  }
+
+  sendStatus(userUuid: string, status: string) {
+    const subject = this.getSubject(userUuid);
+    subject.next({ status });
   }
 
   async getLoggedProfile(userUuid: string) {
@@ -329,7 +325,7 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
           profilePic = `data:${ct};base64,${Buffer.from(buf).toString('base64')}`;
         }
       }
-    } catch (e) {}
+    } catch {}
 
     return {
       id,
