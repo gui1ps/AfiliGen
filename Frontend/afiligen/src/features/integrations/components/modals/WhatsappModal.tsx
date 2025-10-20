@@ -4,23 +4,49 @@ import { useWhatsapp } from '../../hooks/useWhatsapp';
 import Box from '@mui/material/Box';
 import { QRCodeCanvas } from 'qrcode.react';
 import Skeleton from '@mui/material/Skeleton';
-import { useEffect } from 'react';
 import Avatar from '@mui/material/Avatar';
+import { ReactNode, useCallback, useEffect } from 'react';
+import QrCode2Icon from '@mui/icons-material/QrCode2';
 
 type EditProfileModalProps = {
   open: boolean;
   onClose: () => void;
 };
 
+const whatsappBoxWh = 256;
+
 export function WhatsappModal({ open, onClose }: EditProfileModalProps) {
-  const {
-    isLoading,
-    qr,
-    profile,
-    handleWhatsappConnection,
-    handleWhatsappDisconnection,
-    status,
-  } = useWhatsapp();
+  const { isLoading, qr, profile, handleWhatsappConnection, status } =
+    useWhatsapp();
+
+  const renderWhatsappBoxContent = useCallback((): ReactNode => {
+    if (profile)
+      return (
+        <Avatar
+          src={profile.profilePic as string}
+          alt="Profile Picture"
+          sx={{ width: 80, height: 80 }}
+        />
+      );
+    if (isLoading)
+      return (
+        <Skeleton
+          variant="rectangular"
+          width={whatsappBoxWh}
+          height={whatsappBoxWh}
+        />
+      );
+    if (qr) return <QRCodeCanvas value={qr} size={whatsappBoxWh} />;
+    return (
+      <Button
+        variant="contained"
+        startIcon={<QrCode2Icon />}
+        onClick={handleWhatsappConnection}
+      >
+        QR Code
+      </Button>
+    );
+  }, [isLoading, qr, profile, status]);
 
   return (
     <BaseModal
@@ -31,14 +57,15 @@ export function WhatsappModal({ open, onClose }: EditProfileModalProps) {
       fullScreenAt="sm"
       allowCloseOnBackdrop={false}
       actions={
-        <>
-          <Button onClick={handleWhatsappConnection} variant="outlined">
-            QR Code
+        qr && (
+          <Button
+            variant="contained"
+            startIcon={<QrCode2Icon />}
+            onClick={handleWhatsappConnection}
+          >
+            Novo QR Code
           </Button>
-          <Button variant="contained" onClick={handleWhatsappDisconnection}>
-            Desconectar
-          </Button>
-        </>
+        )
       }
     >
       <Box
@@ -47,19 +74,10 @@ export function WhatsappModal({ open, onClose }: EditProfileModalProps) {
           justifyContent: 'center',
           alignItems: 'center',
           width: '100%',
-          height: 256,
+          height: whatsappBoxWh,
         }}
       >
-        {isLoading && (
-          <Skeleton variant="rectangular" width={256} height={256} />
-        )}
-        {!profile && !isLoading && qr && <QRCodeCanvas value={qr} size={256} />}
-        {profile && (
-          <Avatar
-            src={profile.profilePic as string}
-            sx={{ width: 70, height: 70 }}
-          />
-        )}
+        {renderWhatsappBoxContent()}
       </Box>
     </BaseModal>
   );

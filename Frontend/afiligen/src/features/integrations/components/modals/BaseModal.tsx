@@ -1,4 +1,3 @@
-// BaseModal.tsx
 import * as React from 'react';
 import {
   Modal,
