@@ -8,6 +8,7 @@ import PrivateRoutes from './PrivateRoutes';
 import PublicRoutes from './PublicRoutes';
 import { ToastContainer } from 'react-toastify';
 import Integrations from '../features/integrations/pages/Integrations';
+import Automations from '../features/automations/pages/Automations';
 const AppRoutes = () => {
   return (
     <Router>
@@ -19,6 +20,7 @@ const AppRoutes = () => {
         <Route element={<PrivateRoutes />}>
           <Route path="/home" element={<Home />} />
           <Route path="/integrations" element={<Integrations />} />
+          <Route path="/automations" element={<Automations />} />
         </Route>
       </Routes>
       <ToastContainer

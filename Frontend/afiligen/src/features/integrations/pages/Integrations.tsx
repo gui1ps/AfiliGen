@@ -15,8 +15,11 @@ export default function Integrations() {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   return (
     <BaseLayout>
-      <Typography variant={'h2'} marginBottom={1}>
+      <Typography variant={'h1'} marginBottom={1}>
         Integrações
+      </Typography>
+      <Typography variant={'subtitle1'} marginBottom={1}>
+        Conecte tudo. Automatize o crescimento.
       </Typography>
       <Box sx={{ width: '100%' }}>
         <Grid

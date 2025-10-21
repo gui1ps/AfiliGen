@@ -1,4 +1,4 @@
-import { Button } from '@mui/material';
+import { Button, Typography } from '@mui/material';
 import { BaseModal } from './BaseModal';
 import { useWhatsapp } from '../../hooks/useWhatsapp';
 import Box from '@mui/material/Box';
@@ -22,11 +22,17 @@ export function WhatsappModal({ open, onClose }: EditProfileModalProps) {
   const renderWhatsappBoxContent = useCallback((): ReactNode => {
     if (profile)
       return (
-        <Avatar
-          src={profile.profilePic as string}
-          alt="Profile Picture"
-          sx={{ width: 80, height: 80 }}
-        />
+        <>
+          <Avatar
+            src={profile.profilePic as string}
+            alt="Profile Picture"
+            sx={{ width: 95, height: 95 }}
+          />
+          <Typography sx={{ marginTop: 1 }}>{profile.pushname}</Typography>
+          <Typography sx={{ marginTop: 1 }}>
+            {profile.id.replace('@c.us', '')}
+          </Typography>
+        </>
       );
     if (isLoading)
       return (
@@ -71,6 +77,7 @@ export function WhatsappModal({ open, onClose }: EditProfileModalProps) {
       <Box
         sx={{
           display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
           width: '100%',

@@ -8,6 +8,7 @@ import ListItemText from '@mui/material/ListItemText';
 import IconButton from '@mui/material/IconButton';
 import HomeIcon from '@mui/icons-material/Home';
 import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
+import ElectricBoltIcon from '@mui/icons-material/ElectricBolt';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -26,11 +27,13 @@ interface SidebarProps {
 const iconsMap = new Map<string, React.ReactNode>([
   ['Principal', <HomeIcon />],
   ['Integrações', <IntegrationInstructionsIcon />],
+  ['Automações', <ElectricBoltIcon />],
 ]);
 
 const urlMap = new Map<string, string>([
   ['Principal', '/home'],
   ['Integrações', '/integrations'],
+  ['Automações', '/automations'],
 ]);
 
 export default function Sidebar({ open, setOpen }: SidebarProps) {
@@ -106,7 +109,7 @@ export default function Sidebar({ open, setOpen }: SidebarProps) {
       </Box>
 
       <List sx={{ flexGrow: 1 }}>
-        {['Principal', 'Integrações'].map((text, index) => (
+        {['Principal', 'Integrações', 'Automações'].map((text, index) => (
           <ListItem key={text} disablePadding sx={{ display: 'block' }}>
             <ListItemButton
               selected={selectedIndex === index}
