@@ -1,9 +1,9 @@
 import BaseLayout from '../../../components/layout/BaseLayout';
-
+import Header from '../../../components/layout/Header';
 function Home() {
   return (
     <BaseLayout>
-      <p>Home</p>
+      <Header title="Principal" />
     </BaseLayout>
   );
 }

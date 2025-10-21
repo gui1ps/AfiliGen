@@ -6,7 +6,6 @@ import { WhatsappMessage } from './whatsapp-message.entity.ts';
 export class WhatsappRoutine extends BaseRoutineEntity {
   @OneToMany(() => WhatsappMessage, (message) => message.routine, {
     cascade: true,
-    eager: true,
   })
   messages: WhatsappMessage[];
 

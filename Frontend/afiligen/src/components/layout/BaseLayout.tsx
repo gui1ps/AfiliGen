@@ -70,6 +70,7 @@ export default function BaseLayout({ children }: PropsWithChildren) {
               overflowX: 'hidden',
               backgroundColor: theme.palette.background.paper,
               p: 4,
+              paddingTop: 8,
               boxSizing: 'border-box',
               transition: (theme) =>
                 theme.transitions.create(['width', 'border-radius'], {

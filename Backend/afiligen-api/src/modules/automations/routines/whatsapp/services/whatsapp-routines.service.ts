@@ -76,30 +76,17 @@ export class WhatsappRoutinesService {
     return routine;
   }
 
-  async findAll(
-    userUuid: string,
-    filters: WhatsappRoutineFiltersDto,
-  ): Promise<WhatsappRoutine[]> {
-    const qb = this.routineRepo
-      .createQueryBuilder('routine')
-      .leftJoinAndSelect('routine.user', 'user')
-      .where('user.uuid = :userUuid', { userUuid });
-
-    if (filters.name) {
-      qb.andWhere('routine.name ILIKE :name', { name: `%${filters.name}%` });
-    }
-
-    if (filters.status) {
-      qb.andWhere('routine.status = :status', { status: filters.status });
-    }
-
-    return qb.getMany();
+  async findAll(userUuid: string): Promise<WhatsappRoutine[]> {
+    const whatsappRoutines = this.routineRepo.find({
+      where: { user: { uuid: userUuid } },
+    });
+    return whatsappRoutines;
   }
 
   async findOne(userUuid: string, id: number): Promise<WhatsappRoutine> {
     const routine = await this.routineRepo.findOne({
       where: { id, user: { uuid: userUuid } },
-      relations: ['user', 'messages'],
+      relations: ['messages', 'user', 'chatAppMessageBlock'],
     });
 
     if (!routine) throw new NotFoundException(`Routine ${id} not found`);

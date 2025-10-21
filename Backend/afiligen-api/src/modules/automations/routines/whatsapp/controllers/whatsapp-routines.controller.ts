@@ -36,11 +36,8 @@ export class WhatsappRoutinesController {
 
   @Get()
   @Roles('user')
-  async findAll(
-    @Query() filters: WhatsappRoutineFiltersDto,
-    @GetUser('userUuid') userUuid: string,
-  ) {
-    return this.routinesService.findAll(userUuid, filters);
+  async findAll(@GetUser('userUuid') userUuid: string) {
+    return this.routinesService.findAll(userUuid);
   }
 
   @Get(':id')

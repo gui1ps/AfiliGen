@@ -1,11 +1,13 @@
 import BaseLayout from '../../../components/layout/BaseLayout';
-import { IconButton, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Integration from '../interfaces/Integration';
 import { WhatsApp } from '@mui/icons-material';
 import { WhatsappModal } from '../components/modals/WhatsappModal';
 import { useState } from 'react';
+import Paper from '@mui/material/Paper';
+import Header from '../../../components/layout/Header';
 
 const integrations: Integration[] = [
   { name: 'WhatsApp', logo: <WhatsApp fontSize="large" /> },
@@ -15,12 +17,10 @@ export default function Integrations() {
   const [activeModal, setActiveModal] = useState<string | null>(null);
   return (
     <BaseLayout>
-      <Typography variant={'h1'} marginBottom={1}>
-        Integrações
-      </Typography>
-      <Typography variant={'subtitle1'} marginBottom={1}>
-        Conecte tudo. Automatize o crescimento.
-      </Typography>
+      <Header
+        title="Integrações"
+        subtitle="Conecte tudo. Automatize o crescimento."
+      />
       <Box sx={{ width: '100%' }}>
         <Grid
           container
@@ -28,14 +28,25 @@ export default function Integrations() {
           columns={{ xs: 4, sm: 8, md: 12 }}
         >
           {integrations.map((item, index) => (
-            <Grid key={index} size={{ xs: 2, sm: 4, md: 4 }}>
-              <IconButton
+            <Grid key={index} size={{ xs: 12, sm: 12, md: 3 }}>
+              <Paper
                 onClick={() => {
                   setActiveModal(item.name);
                 }}
+                elevation={4}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderRadius: 1,
+                  minHeight: '150px',
+                  cursor: 'pointer',
+                }}
               >
                 {item.logo}
-              </IconButton>
+                <Typography marginTop={1}>{item.name}</Typography>
+              </Paper>
             </Grid>
           ))}
         </Grid>
