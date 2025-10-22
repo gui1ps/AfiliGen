@@ -1,5 +1,5 @@
 import { Button, Typography } from '@mui/material';
-import { BaseModal } from './BaseModal';
+import { BaseModal } from '../../../../components/modals/BaseModal';
 import { useWhatsapp } from '../../hooks/useWhatsapp';
 import Box from '@mui/material/Box';
 import { QRCodeCanvas } from 'qrcode.react';
