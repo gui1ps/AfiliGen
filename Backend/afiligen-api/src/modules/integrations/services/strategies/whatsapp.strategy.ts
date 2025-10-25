@@ -272,6 +272,25 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
       const chats = await client.getChats();
       return chats;
     } catch (error) {
+      console.log(`O ERRO É =====> ${error}`);
+      throw new ConflictException('Unable to retrieve chats');
+    }
+  }
+
+  async getContacts(userUuid: string) {
+    const client = clients.get(userUuid);
+    if (!client)
+      throw new NotFoundException(`No client found for user uuid ${userUuid}`);
+    try {
+      const chats = await client.getContacts();
+      const filteredChats = chats.filter(
+        (c) =>
+          ((c.isWAContact && c.isMyContact && !c.isBlocked) || c.isGroup) &&
+          !c.isBusiness &&
+          !c.isEnterprise,
+      );
+      return filteredChats;
+    } catch (error) {
       throw new ConflictException('Unable to retrieve contacts');
     }
   }

@@ -1,39 +1,43 @@
 import { createTheme } from '@mui/material/styles';
 import { palette } from './palette';
 import { typography } from './typography';
+import { ptBR } from '@mui/x-data-grid/locales';
 
-export const theme = createTheme({
-  palette,
-  typography,
-  shape: {
-    borderRadius: 8,
-  },
-  components: {
-    MuiButton: {
-      styleOverrides: {
-        root: {
-          borderRadius: 8,
-          textTransform: 'none',
-          padding: '15px 20px',
-        },
-        textSizeSmall: true,
-      },
+export const theme = createTheme(
+  {
+    palette,
+    typography,
+    shape: {
+      borderRadius: 8,
     },
-    MuiLink: {
-      styleOverrides: {
-        root: {
-          textDecoration: 'none',
+    components: {
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: 8,
+            textTransform: 'none',
+            padding: '15px 20px',
+          },
+          textSizeSmall: true,
         },
       },
-    },
-    MuiTextField: {
-      styleOverrides: {
-        root: {
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 10,
+      MuiLink: {
+        styleOverrides: {
+          root: {
+            textDecoration: 'none',
+          },
+        },
+      },
+      MuiTextField: {
+        styleOverrides: {
+          root: {
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 10,
+            },
           },
         },
       },
     },
   },
-});
+  ptBR,
+);

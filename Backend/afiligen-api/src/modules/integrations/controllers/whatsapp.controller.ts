@@ -53,6 +53,12 @@ export class WhatsappController {
     return this.whatsappService.getChats(userUuid);
   }
 
+  @Get('contacts')
+  @Roles('user')
+  async getContacts(@GetUser('userUuid') userUuid: string) {
+    return this.whatsappService.getContacts(userUuid);
+  }
+
   @Post('message')
   @Roles('user')
   async sendMessage(

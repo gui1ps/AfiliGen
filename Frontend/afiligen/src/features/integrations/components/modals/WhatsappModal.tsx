@@ -16,8 +16,7 @@ type EditProfileModalProps = {
 const whatsappBoxWh = 256;
 
 export function WhatsappModal({ open, onClose }: EditProfileModalProps) {
-  const { isLoading, qr, profile, handleWhatsappConnection, status } =
-    useWhatsapp();
+  const { isLoading, qr, profile, handleGetQr, status } = useWhatsapp();
 
   const renderWhatsappBoxContent = useCallback((): ReactNode => {
     if (profile)
@@ -34,6 +33,7 @@ export function WhatsappModal({ open, onClose }: EditProfileModalProps) {
           </Typography>
         </>
       );
+
     if (isLoading)
       return (
         <Skeleton
@@ -42,17 +42,19 @@ export function WhatsappModal({ open, onClose }: EditProfileModalProps) {
           height={whatsappBoxWh}
         />
       );
+
     if (qr) return <QRCodeCanvas value={qr} size={whatsappBoxWh} />;
+
     return (
       <Button
         variant="contained"
         startIcon={<QrCode2Icon />}
-        onClick={handleWhatsappConnection}
+        onClick={handleGetQr}
       >
-        QR Code
+        Gerar QR Code
       </Button>
     );
-  }, [isLoading, qr, profile, status]);
+  }, [isLoading, qr, profile, status, handleGetQr]);
 
   return (
     <BaseModal
@@ -67,7 +69,8 @@ export function WhatsappModal({ open, onClose }: EditProfileModalProps) {
           <Button
             variant="contained"
             startIcon={<QrCode2Icon />}
-            onClick={handleWhatsappConnection}
+            onClick={handleGetQr}
+            disabled={isLoading}
           >
             Novo QR Code
           </Button>

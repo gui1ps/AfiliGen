@@ -8,12 +8,15 @@ import {
   Stack,
 } from '@mui/material';
 import { BaseModal, BaseModalProps } from './BaseModal';
+import { useState } from 'react';
+import { useEffect } from 'react';
 
 export type WizardStep = {
   title?: React.ReactNode;
   subtitle?: React.ReactNode;
-  content: React.ReactNode;
+  content: () => React.ReactNode;
   onNext?: () => Promise<void> | void;
+  nextEnabled?: () => boolean;
   onBack?: () => void;
 };
 
@@ -42,6 +45,8 @@ export const WizardModal: React.FC<WizardModalProps> = ({
 }) => {
   const theme = useTheme();
   const [activeStep, setActiveStep] = React.useState(initialStep);
+  const [isNextDisabled, setIsNextDisabled] = useState<boolean>(false);
+
   const totalSteps = steps.length;
   const current = steps[activeStep];
 
@@ -60,6 +65,12 @@ export const WizardModal: React.FC<WizardModalProps> = ({
     if (activeStep > 0) setActiveStep((s) => s - 1);
   };
 
+  useEffect(() => {
+    if (current.nextEnabled) {
+      setIsNextDisabled(current.nextEnabled());
+    }
+  }, [current]);
+
   return (
     <BaseModal
       open={open}
@@ -74,13 +85,18 @@ export const WizardModal: React.FC<WizardModalProps> = ({
               {backLabel}
             </Button>
           )}
-          <Button onClick={handleNext} variant="contained" color="primary">
+          <Button
+            onClick={handleNext}
+            variant="contained"
+            color="primary"
+            disabled={isNextDisabled}
+          >
             {activeStep === totalSteps - 1 ? finishLabel : nextLabel}
           </Button>
         </>
       }
     >
-      <Box>{current.content}</Box>
+      <Box sx={{ minHeight: '250px' }}>{current.content()}</Box>
 
       <Stack alignItems="center" mt={3}>
         <MobileStepper

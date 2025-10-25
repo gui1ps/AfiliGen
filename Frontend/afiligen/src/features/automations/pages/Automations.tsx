@@ -8,7 +8,7 @@ import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 import { WizardModal } from '../../../components/modals/WizardModal';
 import { useState } from 'react';
-import useAutomationsForm from '../hooks/useAutomationsForm';
+import useAutomationsForm from '../hooks/useWhatsappRoutineForm';
 
 export default function Automations() {
   const { whatsappRoutines } = useAutomations();
