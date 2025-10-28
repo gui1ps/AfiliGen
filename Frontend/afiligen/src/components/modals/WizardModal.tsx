@@ -26,7 +26,7 @@ export type WizardModalProps = Omit<
 > & {
   steps: WizardStep[];
   initialStep?: number;
-  onFinish?: () => void;
+  onFinish?: () => Promise<void> | void;
   nextLabel?: string;
   backLabel?: string;
   finishLabel?: string;
@@ -55,8 +55,15 @@ export const WizardModal: React.FC<WizardModalProps> = ({
     if (activeStep < totalSteps - 1) {
       setActiveStep((s) => s + 1);
     } else {
-      onFinish?.();
-      onClose();
+      if (onFinish) {
+        try {
+          await onFinish();
+          onClose();
+        } catch {
+          console.log('erro');
+        }
+      }
+      setActiveStep(initialStep);
     }
   };
 
@@ -74,7 +81,10 @@ export const WizardModal: React.FC<WizardModalProps> = ({
   return (
     <BaseModal
       open={open}
-      onClose={onClose}
+      onClose={() => {
+        onClose();
+        setActiveStep(initialStep);
+      }}
       title={current.title}
       subtitle={current.subtitle}
       {...baseProps}

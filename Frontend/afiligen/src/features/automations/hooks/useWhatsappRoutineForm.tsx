@@ -2,16 +2,26 @@ import Integration from '../../integrations/interfaces/Integration';
 import { WhatsApp } from '@mui/icons-material';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
-import { Typography, TextField, Box, CircularProgress } from '@mui/material';
+import {
+  Typography,
+  TextField,
+  Box,
+  CircularProgress,
+  Button,
+} from '@mui/material';
 import { useState, useCallback, ReactNode, useEffect } from 'react';
 import { useTheme } from '@mui/material/styles';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { WizardStep } from '../../../components/modals/WizardModal';
 import { useWhatsapp } from '../../integrations/hooks/useWhatsapp';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { WhatsAppContact } from '../../../services/integrations/whatsapp';
+import { createWhatsappRoutine } from '../../../services/automations/routines/whatsapp/whatsapp-routines';
+import { toast } from 'react-toastify';
+import useAutomations from './useAutomations';
+import dayjs from 'dayjs';
 
 const integrations: Integration[] = [
   { name: 'WhatsApp', logo: <WhatsApp fontSize="large" /> },
@@ -19,26 +29,36 @@ const integrations: Integration[] = [
 
 export default function useAutomationsForm() {
   const theme = useTheme();
-  const { isLoading, contacts, refetchContacts } = useWhatsapp();
+  const { isLoading, contacts, status } = useWhatsapp();
+
+  const minStartDate = dayjs().add(5, 'minute');
+  const minEndDate = minStartDate.add(5, 'minute');
 
   const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
   const [formData, setFormData] = useState({
-    title: '',
-    interval: '',
-    startDate: null,
-    endDate: null,
-    selectedContacts: [] as WhatsAppContact[],
+    name: '',
+    intervalSeconds: '',
+    startAt: null,
+    endAt: null,
+    recipients: [] as string[],
   });
-
-  useEffect(() => {
-    console.log(JSON.stringify(formData));
-  }, [formData]);
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const renderWhatsappBoxContent = useCallback(
+  const cleanWhatsappRoutineForm = () => {
+    setFormData({
+      name: '',
+      intervalSeconds: '',
+      startAt: null,
+      endAt: null,
+      recipients: [] as string[],
+    });
+    setSelectedChannel(null);
+  };
+
+  const renderWhatsappContacts = useCallback(
     (contacts?: WhatsAppContact[], isLoading?: boolean): ReactNode => {
       if (isLoading) {
         return (
@@ -54,6 +74,27 @@ export default function useAutomationsForm() {
       }
 
       if (!contacts || contacts.length === 0) {
+        if (status !== 'CONNECTED') {
+          return (
+            <Box
+              display={'flex'}
+              flexDirection={'column'}
+              justifyContent={'center'}
+              alignItems={'center'}
+            >
+              <Typography color="text.secondary" align="center">
+                Sem conexão ao WhatsApp.
+              </Typography>
+              <Button
+                variant="outlined"
+                sx={{ width: '100%' }}
+                href="/integrations"
+              >
+                Integrações
+              </Button>
+            </Box>
+          );
+        }
         return (
           <Typography color="text.secondary" align="center">
             Nenhum contato encontrado.
@@ -82,8 +123,7 @@ export default function useAutomationsForm() {
             onRowSelectionModelChange={(newSelection) => {
               console.log(newSelection);
               const contactsArray = Array.from(newSelection.ids);
-              console.log(contactsArray);
-              handleChange('selectedContacts', contactsArray);
+              handleChange('recipients', contactsArray);
             }}
             pageSizeOptions={[]}
             initialState={{
@@ -102,12 +142,12 @@ export default function useAutomationsForm() {
         return selectedChannel !== null;
       case 1:
         return (
-          formData.title.trim().length > 0 &&
-          Number(formData.interval) > 0 &&
-          formData.startDate !== null
+          formData.name.trim().length > 0 &&
+          Number(formData.intervalSeconds) > 0 &&
+          formData.startAt !== null
         );
       case 2:
-        return formData.selectedContacts.length > 0;
+        return formData.recipients.length > 0;
       default:
         return false;
     }
@@ -170,15 +210,31 @@ export default function useAutomationsForm() {
           <TextField
             fullWidth
             label="Título"
-            value={formData.title}
-            onChange={(e) => handleChange('title', e.target.value)}
+            value={formData.name}
+            onChange={(e) => handleChange('name', e.target.value)}
+            slotProps={{
+              htmlInput: {
+                maxLength: 21,
+              },
+            }}
           />
           <TextField
             fullWidth
-            label="Intervalo entre mensagens (segundos)"
+            label="Intervalo entre mensagens (minutos)"
             type="number"
-            value={formData.interval}
-            onChange={(e) => handleChange('interval', e.target.value)}
+            value={
+              formData.intervalSeconds
+                ? Number(formData.intervalSeconds) / 60
+                : ''
+            }
+            onChange={(e) =>
+              handleChange('intervalSeconds', Number(e.target.value) * 60)
+            }
+            slotProps={{
+              htmlInput: {
+                min: 1,
+              },
+            }}
           />
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Box
@@ -189,20 +245,22 @@ export default function useAutomationsForm() {
                 width: '100%',
               }}
             >
-              <DatePicker
+              <DateTimePicker
                 label="Data inicial"
-                value={formData.startDate}
-                onChange={(newValue) => handleChange('startDate', newValue)}
+                value={formData.startAt}
+                onChange={(newValue) => handleChange('startAt', newValue)}
+                minDateTime={minStartDate}
               />
-              <DatePicker
+              <DateTimePicker
                 label="Data final"
-                value={formData.endDate}
-                onChange={(newValue) => handleChange('endDate', newValue)}
+                value={formData.endAt}
+                onChange={(newValue) => handleChange('endAt', newValue)}
                 slotProps={{
                   textField: {
                     helperText: 'Opcional',
                   },
                 }}
+                minDateTime={minEndDate}
               />
             </Box>
           </LocalizationProvider>
@@ -222,16 +280,29 @@ export default function useAutomationsForm() {
             width: '100%',
           }}
         >
-          {renderWhatsappBoxContent(contacts, isLoading)}
+          {renderWhatsappContacts(contacts, isLoading)}
         </Box>
       ),
       nextEnabled: () => !isStepValid(2),
     },
   ];
 
+  const handleRoutineSubmit = async () => {
+    try {
+      await createWhatsappRoutine(formData);
+      toast.success('Rotina criada com sucesso');
+    } catch (error) {
+      toast.error(
+        `Não foi possível criar uma nova rotina, tente novamente.\nMotivo: ${JSON.stringify(error)}`,
+      );
+    }
+  };
+
   return {
     getRoutineCreationSteps,
     formData,
     isStepValid,
+    cleanWhatsappRoutineForm,
+    handleRoutineSubmit,
   };
 }

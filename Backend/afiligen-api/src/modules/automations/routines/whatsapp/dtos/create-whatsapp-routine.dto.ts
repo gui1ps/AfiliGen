@@ -32,7 +32,7 @@ export class CreateWhatsappRoutineDto {
   endAt?: string;
 
   @IsInt()
-  @Min(300)
+  @Min(60)
   intervalSeconds: number;
 
   @IsEnum(['single', 'batch', 'sequential'])

@@ -62,12 +62,13 @@ export class UpdateWhatsappRoutineDto {
   @ArrayNotEmpty()
   recipients?: string[];
 
+  @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
   @IsNotEmpty({ each: true })
   @ArrayNotEmpty()
   @Type(() => Message)
-  messages: Message[];
+  messages?: Message[];
 
   @IsPositive()
   @IsOptional()

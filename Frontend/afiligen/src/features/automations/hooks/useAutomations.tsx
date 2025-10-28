@@ -1,26 +1,38 @@
 import { useEffect, useState } from 'react';
-import { getAllWhatsappRoutines } from '../../../services/automations/routines/whatsapp/whatsapp-routines';
+import {
+  getAllWhatsappRoutines,
+  updateWhatsappRoutine,
+} from '../../../services/automations/routines/whatsapp/whatsapp-routines';
 import { WhatsAppRoutine } from '../../../services/automations/routines/whatsapp/whatsapp-routines';
-import Integration from '../../integrations/interfaces/Integration';
-import { WhatsApp } from '@mui/icons-material';
-
-const integrations: Integration[] = [
-  { name: 'WhatsApp', logo: <WhatsApp fontSize="large" /> },
-];
+import { useQuery } from '@tanstack/react-query';
+import { WhatsappRoutinePayload } from '../../../services/automations/routines/whatsapp/whatsapp-routines';
 
 export default function useAutomations() {
   const [whatsappRoutines, setWhatsappRoutines] = useState<WhatsAppRoutine[]>(
     [],
   );
 
-  const loadWhatsappRoutines = async () => {
-    const routines = await getAllWhatsappRoutines();
-    setWhatsappRoutines(routines);
+  const { data, refetch } = useQuery({
+    queryKey: ['whatsappRoutines'],
+    queryFn: async () => {
+      return await getAllWhatsappRoutines();
+    },
+  });
+
+  const handleWhatsappRoutineUpdate = async (
+    data: Partial<WhatsappRoutinePayload>,
+    id: number,
+  ) => {
+    try {
+      await updateWhatsappRoutine(data, id);
+    } catch {}
   };
 
   useEffect(() => {
-    loadWhatsappRoutines();
-  }, []);
+    if (data) {
+      setWhatsappRoutines(data);
+    }
+  }, [data]);
 
-  return { whatsappRoutines };
+  return { whatsappRoutines, refetch, handleWhatsappRoutineUpdate };
 }

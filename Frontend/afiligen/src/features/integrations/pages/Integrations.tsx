@@ -8,6 +8,7 @@ import { WhatsappModal } from '../components/modals/WhatsappModal';
 import { useState } from 'react';
 import Paper from '@mui/material/Paper';
 import Header from '../../../components/layout/Header';
+import useAutomations from '../../automations/hooks/useAutomations';
 
 const integrations: Integration[] = [
   { name: 'WhatsApp', logo: <WhatsApp fontSize="large" /> },
@@ -15,6 +16,8 @@ const integrations: Integration[] = [
 
 export default function Integrations() {
   const [activeModal, setActiveModal] = useState<string | null>(null);
+  const { refetch, whatsappRoutines } = useAutomations();
+
   return (
     <BaseLayout>
       <Header
