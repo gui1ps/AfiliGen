@@ -6,23 +6,84 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
 import { WizardModal } from '../../../components/modals/WizardModal';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import useAutomationsForm from '../hooks/useWhatsappRoutineForm';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import { useQueryClient } from '@tanstack/react-query';
 import Switch from '@mui/material/Switch';
+import EditIcon from '@mui/icons-material/Edit';
+import MessageIcon from '@mui/icons-material/Message';
+import ListAltIcon from '@mui/icons-material/ListAlt';
+import ContactsIcon from '@mui/icons-material/Contacts';
+import Tooltip from '@mui/material/Tooltip';
+import WhatsappRoutineModal from '../components/modals/whatsappRoutineModal';
+import { WhatsAppModalType } from '../components/modals/whatsappRoutineModal';
+
+interface ModalState<T = any> {
+  type?: WhatsAppModalType;
+  data?: any;
+}
+
+const hoverStyles = {
+  ':hover': {
+    backgroundColor: '#F46829',
+    color: '#FBFBFB',
+  },
+};
 
 export default function Automations() {
   const { whatsappRoutines, handleWhatsappRoutineUpdate } = useAutomations();
   const queryClient = useQueryClient();
+
+  const [activeModal, setActiveModal] = useState<ModalState>({
+    type: undefined,
+  });
+
+  const whatsappModalTypes = [
+    'routines',
+    'routine_message',
+    'routine_block',
+    'routine_edition',
+    'routine_contacts',
+  ];
+
+  const whatsAppRoutineActionButtons = [
+    { icon: <EditIcon />, type: 'routine_edition', tooltip: 'Editar rotina' },
+    {
+      icon: <MessageIcon />,
+      type: 'routine_message',
+      tooltip: 'Mensagens',
+    },
+    {
+      icon: <ListAltIcon />,
+      type: 'routine_block',
+      tooltip: 'Blocos',
+    },
+    {
+      icon: <ContactsIcon />,
+      type: 'routine_contacts',
+      tooltip: 'Contatos',
+    },
+  ];
+
+  const openModal = useCallback((type: WhatsAppModalType, data?: any) => {
+    setActiveModal({ type, data });
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setActiveModal({ type: undefined, data: undefined });
+  }, []);
+
+  useEffect(() => {
+    console.log(activeModal);
+  }, [activeModal]);
 
   const {
     getRoutineCreationSteps,
     cleanWhatsappRoutineForm,
     handleRoutineSubmit,
   } = useAutomationsForm();
-  const [activeModal, setActiveModal] = useState<string | null>(null);
 
   const routinesTable = useCallback(() => {
     return (
@@ -46,22 +107,53 @@ export default function Automations() {
                 position: 'relative',
               }}
             >
-              <Typography marginTop={1}>{item.name}</Typography>
-              <Switch
-                sx={{ position: 'absolute', top: 0, left: 165 }}
-                checked={item.status === 'active'}
-                onChange={async (e) => {
-                  await handleWhatsappRoutineUpdate(
-                    {
-                      status: e.target.checked ? 'active' : 'paused',
-                    },
-                    item.id,
-                  );
-                  queryClient.invalidateQueries({
-                    queryKey: ['whatsappRoutines'],
-                  });
-                }}
-              />
+              <Box
+                display={'flex'}
+                alignItems={'center'}
+                justifyContent={'space-between'}
+                flex={1}
+                width={'100%'}
+                paddingLeft={1}
+                paddingRight={1}
+              >
+                <Tooltip
+                  title={
+                    item.status === 'active' ? 'Pausar Rotina' : 'Ativar Rotina'
+                  }
+                >
+                  <Switch
+                    checked={item.status === 'active'}
+                    onChange={async (e) => {
+                      await handleWhatsappRoutineUpdate(
+                        {
+                          status: e.target.checked ? 'active' : 'paused',
+                        },
+                        item.id,
+                      );
+                      queryClient.invalidateQueries({
+                        queryKey: ['whatsappRoutines'],
+                      });
+                    }}
+                  />
+                </Tooltip>
+                <Box>
+                  {whatsAppRoutineActionButtons.map((btn) => (
+                    <Tooltip key={btn.type} title={btn.tooltip} arrow>
+                      <IconButton
+                        sx={hoverStyles}
+                        onClick={() =>
+                          openModal(btn.type as WhatsAppModalType, item)
+                        }
+                      >
+                        {btn.icon}
+                      </IconButton>
+                    </Tooltip>
+                  ))}
+                </Box>
+              </Box>
+              <Typography marginTop={1} flex={4}>
+                {item.name}
+              </Typography>
             </Paper>
           </Grid>
         ))}
@@ -86,7 +178,7 @@ export default function Automations() {
         </Typography>
         <IconButton
           onClick={() => {
-            setActiveModal('routines');
+            openModal('routines');
           }}
         >
           <AddCircleIcon fontSize="large" />
@@ -94,9 +186,9 @@ export default function Automations() {
       </Box>
       {routinesTable()}
       <WizardModal
-        open={activeModal === 'routines'}
+        open={activeModal.type === 'routines'}
         onClose={() => {
-          setActiveModal(null);
+          closeModal();
           cleanWhatsappRoutineForm();
         }}
         steps={getRoutineCreationSteps()}
@@ -104,6 +196,12 @@ export default function Automations() {
           await handleRoutineSubmit();
           queryClient.invalidateQueries({ queryKey: ['whatsappRoutines'] });
         }}
+      />
+      <WhatsappRoutineModal
+        open={whatsappModalTypes.includes(activeModal.type || '')}
+        onClose={() => closeModal()}
+        type={activeModal.type}
+        item={activeModal.data}
       />
     </BaseLayout>
   );

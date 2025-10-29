@@ -20,7 +20,6 @@ import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { WhatsAppContact } from '../../../services/integrations/whatsapp';
 import { createWhatsappRoutine } from '../../../services/automations/routines/whatsapp/whatsapp-routines';
 import { toast } from 'react-toastify';
-import useAutomations from './useAutomations';
 import dayjs from 'dayjs';
 
 const integrations: Integration[] = [
