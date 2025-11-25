@@ -17,8 +17,9 @@ import MessageIcon from '@mui/icons-material/Message';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import ContactsIcon from '@mui/icons-material/Contacts';
 import Tooltip from '@mui/material/Tooltip';
-import WhatsappRoutineModal from '../components/modals/whatsappRoutineModal';
-import { WhatsAppModalType } from '../components/modals/whatsappRoutineModal';
+import WhatsappRoutineModal from '../components/modals/WhatsappRoutineModal';
+import { WhatsAppModalType } from '../components/modals/WhatsappRoutineModal';
+import { getOneWhatsappRoutine } from '../../../services/automations/routines/whatsapp/whatsapp-routines';
 
 interface ModalState<T = any> {
   type?: WhatsAppModalType;
@@ -92,8 +93,8 @@ export default function Automations() {
         spacing={{ xs: 2, md: 3 }}
         columns={{ xs: 4, sm: 8, md: 12 }}
       >
-        {whatsappRoutines.map((item, index) => (
-          <Grid key={index} size={{ xs: 12, sm: 12, md: 3 }}>
+        {whatsappRoutines.map((item) => (
+          <Grid key={item.id} size={{ xs: 12, sm: 12, md: 3 }}>
             <Paper
               elevation={4}
               sx={{
@@ -125,14 +126,9 @@ export default function Automations() {
                     checked={item.status === 'active'}
                     onChange={async (e) => {
                       await handleWhatsappRoutineUpdate(
-                        {
-                          status: e.target.checked ? 'active' : 'paused',
-                        },
+                        { status: e.target.checked ? 'active' : 'paused' },
                         item.id,
                       );
-                      queryClient.invalidateQueries({
-                        queryKey: ['whatsappRoutines'],
-                      });
                     }}
                   />
                 </Tooltip>
@@ -159,7 +155,7 @@ export default function Automations() {
         ))}
       </Grid>
     );
-  }, [whatsappRoutines]);
+  }, [whatsappRoutines, handleWhatsappRoutineUpdate, openModal]);
 
   return (
     <BaseLayout>

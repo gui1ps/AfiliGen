@@ -1,7 +1,7 @@
 import { useWhatsapp } from '../../features/integrations/hooks/useWhatsapp';
 import { Box } from '@mui/material';
 import { WhatsAppContact } from '../../services/integrations/whatsapp';
-import { useCallback, ReactNode, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import Button from '@mui/material/Button';
