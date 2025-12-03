@@ -26,7 +26,7 @@ import { BullModule } from '@nestjs/bull';
         password: cfg.get<string>('DATABASE_PASSWORD'),
         database: cfg.get<string>('DATABASE_NAME'),
         autoLoadEntities: true,
-        synchronize: true, // cuidado em produção
+        synchronize: false, // cuidado em produção
       }),
     }),
 
