@@ -1,6 +1,6 @@
 FROM node:20-slim
 
-ARG ENV=dev
+ARG ENV=production
 ENV NODE_ENV=$ENV
 ENV DEBIAN_FRONTEND=noninteractive
 
