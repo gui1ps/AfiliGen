@@ -194,7 +194,12 @@ export default function Automations() {
         }}
       />
       <WhatsappRoutineModal
-        open={whatsappModalTypes.includes(activeModal.type || '')}
+        open={[
+          'routine_message',
+          'routine_block',
+          'routine_edition',
+          'routine_contacts',
+        ].includes(activeModal.type || '')}
         onClose={() => closeModal()}
         type={activeModal.type}
         item={activeModal.data}

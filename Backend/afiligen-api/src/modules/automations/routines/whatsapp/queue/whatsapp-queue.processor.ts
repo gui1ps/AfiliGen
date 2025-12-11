@@ -57,34 +57,12 @@ export class WhatsappQueueProcessor {
       return;
     }
 
-    const blockMessages = block.messages ?? [];
-
     const messages = routine.messages ?? [];
-    const { lastSentMessageIndex, maxMessagesPerBlock } = routine;
-
-    const nextMessageIndex = lastSentMessageIndex + 1;
-    const endMessageIndex = nextMessageIndex + maxMessagesPerBlock;
-
-    const nextMessagesToSend = messages.slice(
-      nextMessageIndex,
-      endMessageIndex,
-    );
-
-    this.logger.log(
-      `LISTA DE MENSAGEM ROTINA: ${JSON.stringify(nextMessagesToSend)}`,
-    );
-
-    if (nextMessagesToSend.length > 0) {
-      blockMessages.push(...nextMessagesToSend);
-    }
-
     const recipients = routine.recipients ?? [];
 
-    this.logger.log(
-      `LISTA DE MENSAGEM TOTAL: ${JSON.stringify(blockMessages)}`,
-    );
+    this.logger.log(`LISTA DE MENSAGEM TOTAL: ${JSON.stringify(messages)}`);
 
-    for (const message of blockMessages ?? []) {
+    for (const message of messages) {
       for (const recipient of recipients) {
         try {
           await this.sender.sendMessage(routine.user.uuid, {

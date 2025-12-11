@@ -3,3 +3,4 @@ Backend/afiligen-api/.wwebjs_auth
 Backend/afiligen-api/.wwebjs_cache
 Frontend/afiligen/node_modules
 core
+Frontend/afiligen/.env
