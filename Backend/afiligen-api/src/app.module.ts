@@ -18,19 +18,26 @@ import { BullModule } from '@nestjs/bull';
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (cfg: ConfigService) => ({
-        type: 'postgres',
-        host: cfg.get<string>('DATABASE_HOST'),
-        port: Number(cfg.get<string>('DATABASE_PORT') ?? 5432),
-        username: cfg.get<string>('DATABASE_USER'),
-        password: cfg.get<string>('DATABASE_PASSWORD'),
-        database: cfg.get<string>('DATABASE_NAME'),
-        autoLoadEntities: true,
-        ssl: {
-        rejectUnauthorized: false,
+      useFactory: (cfg: ConfigService) => {
+        const isProd = cfg.get<string>('NODE_ENV') === 'production';
+
+        return {
+          type: 'postgres',
+          host: cfg.get<string>('DATABASE_HOST'),
+          port: Number(cfg.get<string>('DATABASE_PORT') ?? 5432),
+          username: cfg.get<string>('DATABASE_USER'),
+          password: cfg.get<string>('DATABASE_PASSWORD'),
+          database: cfg.get<string>('DATABASE_NAME'),
+          autoLoadEntities: true,
+          synchronize: !isProd,
+
+          ...(isProd && {
+            ssl: {
+              rejectUnauthorized: true,
+            },
+          }),
+        };
       },
-        synchronize: false,
-      }),
     }),
 
     BullModule.forRootAsync({
