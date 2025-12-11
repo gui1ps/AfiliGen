@@ -30,6 +30,7 @@ import { BullModule } from '@nestjs/bull';
           database: cfg.get<string>('DATABASE_NAME'),
           autoLoadEntities: true,
           synchronize: !isProd,
+          migrationsRun: isProd,
 
           ...(isProd && {
             ssl: {
