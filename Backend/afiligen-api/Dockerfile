@@ -1,11 +1,11 @@
 FROM node:20-slim
 
-# Evita prompts interativos
+ARG ENV=dev
+ENV NODE_ENV=$ENV
 ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /usr/src/app
 
-# Instala Chromium + dependências
 RUN apt-get update && apt-get install -y \
     chromium \
     ca-certificates \
@@ -33,20 +33,17 @@ RUN apt-get update && apt-get install -y \
     libgtk-3-0 \
     libxss1 \
     libxtst6 \
-    --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/*
+    --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PUPPETEER_SKIP_DOWNLOAD=true
-
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 COPY package*.json ./
-
 RUN npm install
 
 COPY . .
 
-RUN npm run build
-
-#CMD ["npm", "run", "start:dev"]
-CMD ["npm", "run", "start:prod"]
+# 👇 COMANDO AUTOMÁTICO baseado no ambiente
+RUN if [ "$NODE_ENV" = "production" ]; then npm run build; fi
+CMD ["sh", "-c", "if [ \"$NODE_ENV\" = 'production' ]; then npm run start:prod; else npm run start:dev; fi"]
