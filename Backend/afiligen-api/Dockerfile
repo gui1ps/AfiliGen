@@ -1,6 +1,6 @@
 FROM node:20-slim
 
-ARG ENV=production
+ARG ENV=dev
 ENV NODE_ENV=$ENV
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -44,6 +44,6 @@ RUN npm install
 
 COPY . .
 
-# 👇 COMANDO AUTOMÁTICO baseado no ambiente
-RUN if [ "$NODE_ENV" = "production" ]; then npm run build; fi
-CMD ["sh", "-c", "if [ \"$NODE_ENV\" = 'production' ]; then npm run start:prod; else npm run start:dev; fi"]
+RUN npm run build
+
+CMD ["npm", "run", "start:prod"]
