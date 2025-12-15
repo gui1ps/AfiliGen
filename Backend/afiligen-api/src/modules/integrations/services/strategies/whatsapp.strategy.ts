@@ -140,9 +140,20 @@ export class WhatsappService implements OnModuleInit, OnApplicationShutdown {
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
+
+            '--disable-gpu',
+            '--no-zygote',
+            '--no-first-run',
+            '--disable-extensions',
+            '--disable-background-networking',
+            '--disable-default-apps',
+
             '--disable-background-timer-throttling',
             '--disable-renderer-backgrounding',
-            '--disable-features=site-per-process',
+
+            '--disable-features=IsolateOrigins,site-per-process',
+
+            '--disable-software-rasterizer',
           ],
         },
         authStrategy: new LocalAuth({
