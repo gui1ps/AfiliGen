@@ -93,7 +93,7 @@ export function useWhatsapp() {
     if (!access_token) return;
 
     const evtSource = new EventSource(
-      'http://localhost:3000/integrations/whatsapp/status/stream',
+      `${process.env.REACT_APP_API}/integrations/whatsapp/status/stream`,
       {
         withCredentials: true,
         fetch: (input, init) =>
