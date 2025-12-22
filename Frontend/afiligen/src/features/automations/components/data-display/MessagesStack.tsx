@@ -16,6 +16,7 @@ import AddIcon from '@mui/icons-material/Add';
 import EmojiPicker from 'emoji-picker-react';
 import DeleteIcon from '@mui/icons-material/Delete';
 
+import { ExpandableMessage } from './ExpandableMessage';
 import { RoutineMessage } from '../../../../services/automations/routines/whatsapp/whatsapp-routines';
 
 interface MessagesStackProps {
@@ -149,30 +150,7 @@ export function MessagesStack({
             >
               <DeleteIcon fontSize="small" />
             </IconButton>
-
-            {msg.mediaPath && (
-              <Box
-                component="img"
-                src={msg.mediaPath}
-                alt=""
-                sx={{
-                  maxWidth: '100%',
-                  height: 'auto',
-                  mb: 1,
-                  borderRadius: 1,
-                }}
-              />
-            )}
-
-            <Typography
-              sx={{
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                overflowWrap: 'anywhere',
-              }}
-            >
-              {msg.content}
-            </Typography>
+            <ExpandableMessage text={msg.content ?? ''} collapsedMaxLines={2} />
           </Box>
         ))
       )}
