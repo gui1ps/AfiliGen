@@ -75,9 +75,7 @@ export function BlocksStack({ blocks, onCreateBlock }: BlocksStackProps) {
               borderRadius: 1,
             }}
           >
-            <Typography>
-              ⏰ {new Date(b.triggerTime).toLocaleString()}
-            </Typography>
+            <Typography>⏰ {dayjs(b.triggerTime).format('HH:mm')}</Typography>
           </Box>
         ))
       )}

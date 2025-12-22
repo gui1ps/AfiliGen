@@ -16,5 +16,5 @@ export class WhatsappRoutine extends BaseRoutineEntity {
   lastSentMessageIndex: number;
 
   @Column({ default: 1 })
-  maxMessagesPerBlock: number; //não considera a quantidade de mensagens configuradas individualemnte para o bloco
+  maxMessagesPerBlock: number;
 }

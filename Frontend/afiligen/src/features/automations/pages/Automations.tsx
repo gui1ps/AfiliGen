@@ -19,7 +19,6 @@ import ContactsIcon from '@mui/icons-material/Contacts';
 import Tooltip from '@mui/material/Tooltip';
 import WhatsappRoutineModal from '../components/modals/WhatsappRoutineModal';
 import { WhatsAppModalType } from '../components/modals/WhatsappRoutineModal';
-import { getOneWhatsappRoutine } from '../../../services/automations/routines/whatsapp/whatsapp-routines';
 
 interface ModalState<T = any> {
   type?: WhatsAppModalType;
@@ -93,66 +92,70 @@ export default function Automations() {
         spacing={{ xs: 2, md: 3 }}
         columns={{ xs: 4, sm: 8, md: 12 }}
       >
-        {whatsappRoutines.map((item) => (
-          <Grid key={item.id} size={{ xs: 12, sm: 12, md: 3 }}>
-            <Paper
-              elevation={4}
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                borderRadius: 1,
-                minHeight: '150px',
-                cursor: 'pointer',
-                position: 'relative',
-              }}
-            >
-              <Box
-                display={'flex'}
-                alignItems={'center'}
-                justifyContent={'space-between'}
-                flex={1}
-                width={'100%'}
-                paddingLeft={1}
-                paddingRight={1}
+        {whatsappRoutines
+          .sort((a, b) => a.id - b.id)
+          .map((item) => (
+            <Grid key={item.id} size={{ xs: 12, sm: 12, md: 3 }}>
+              <Paper
+                elevation={4}
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderRadius: 1,
+                  minHeight: '150px',
+                  cursor: 'pointer',
+                  position: 'relative',
+                }}
               >
-                <Tooltip
-                  title={
-                    item.status === 'active' ? 'Pausar Rotina' : 'Ativar Rotina'
-                  }
+                <Box
+                  display={'flex'}
+                  alignItems={'center'}
+                  justifyContent={'space-between'}
+                  flex={1}
+                  width={'100%'}
+                  paddingLeft={1}
+                  paddingRight={1}
                 >
-                  <Switch
-                    checked={item.status === 'active'}
-                    onChange={async (e) => {
-                      await handleWhatsappRoutineUpdate(
-                        { status: e.target.checked ? 'active' : 'paused' },
-                        item.id,
-                      );
-                    }}
-                  />
-                </Tooltip>
-                <Box>
-                  {whatsAppRoutineActionButtons.map((btn) => (
-                    <Tooltip key={btn.type} title={btn.tooltip} arrow>
-                      <IconButton
-                        sx={hoverStyles}
-                        onClick={() =>
-                          openModal(btn.type as WhatsAppModalType, item)
-                        }
-                      >
-                        {btn.icon}
-                      </IconButton>
-                    </Tooltip>
-                  ))}
+                  <Tooltip
+                    title={
+                      item.status === 'active'
+                        ? 'Pausar Rotina'
+                        : 'Ativar Rotina'
+                    }
+                  >
+                    <Switch
+                      checked={item.status === 'active'}
+                      onChange={async (e) => {
+                        await handleWhatsappRoutineUpdate(
+                          { status: e.target.checked ? 'active' : 'paused' },
+                          item.id,
+                        );
+                      }}
+                    />
+                  </Tooltip>
+                  <Box>
+                    {whatsAppRoutineActionButtons.map((btn) => (
+                      <Tooltip key={btn.type} title={btn.tooltip} arrow>
+                        <IconButton
+                          sx={hoverStyles}
+                          onClick={() =>
+                            openModal(btn.type as WhatsAppModalType, item)
+                          }
+                        >
+                          {btn.icon}
+                        </IconButton>
+                      </Tooltip>
+                    ))}
+                  </Box>
                 </Box>
-              </Box>
-              <Typography marginTop={1} flex={4}>
-                {item.name}
-              </Typography>
-            </Paper>
-          </Grid>
-        ))}
+                <Typography marginTop={1} flex={4}>
+                  {item.name}
+                </Typography>
+              </Paper>
+            </Grid>
+          ))}
       </Grid>
     );
   }, [whatsappRoutines, handleWhatsappRoutineUpdate, openModal]);

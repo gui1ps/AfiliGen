@@ -60,9 +60,22 @@ export class WhatsappQueueProcessor {
     const messages = routine.messages ?? [];
     const recipients = routine.recipients ?? [];
 
-    this.logger.log(`LISTA DE MENSAGEM TOTAL: ${JSON.stringify(messages)}`);
+    const startIndex = routine.lastSentMessageIndex + 1;
+    const maxMessages = routine.maxMessagesPerBlock;
 
-    for (const message of messages) {
+    if (startIndex >= messages.length) {
+      this.logger.log(`No more messages to send for block ${blockId}`);
+      return;
+    }
+
+    const messagesToSend = messages.slice(startIndex, startIndex + maxMessages);
+
+    this.logger.log(`LISTA DE MENSAGEM TOTAL: ${JSON.stringify(messages)}`);
+    this.logger.log(
+      `LISTA DE MENSAGEM A ENVIAR: ${JSON.stringify(messagesToSend)}`,
+    );
+
+    for (const message of messagesToSend) {
       for (const recipient of recipients) {
         try {
           await this.sender.sendMessage(routine.user.uuid, {
@@ -81,6 +94,8 @@ export class WhatsappQueueProcessor {
       }
       await this.sleep((routine.intervalSeconds || 1) * 1000);
     }
+
+    routine.lastSentMessageIndex = startIndex + messagesToSend.length - 1;
 
     this.logger.log(`Block ${blockId} processed successfully`);
   }

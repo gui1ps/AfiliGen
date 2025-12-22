@@ -14,6 +14,7 @@ import {
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import AddIcon from '@mui/icons-material/Add';
 import EmojiPicker from 'emoji-picker-react';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 import { RoutineMessage } from '../../../../services/automations/routines/whatsapp/whatsapp-routines';
 
@@ -122,16 +123,56 @@ export function MessagesStack({
               p: 1,
               border: '1px solid #ddd',
               borderRadius: 1,
+              maxWidth: '100%',
+              overflow: 'hidden',
+              wordBreak: 'break-word',
+              overflowWrap: 'anywhere',
+
+              position: 'relative',
             }}
           >
+            <IconButton
+              size="small"
+              sx={{
+                position: 'absolute',
+                top: 4,
+                right: 4,
+                zIndex: 2,
+                backgroundColor: 'rgba(255,255,255,0.8)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,1)',
+                },
+              }}
+              onClick={() => {
+                console.log('delete message', msg.id);
+              }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+
             {msg.mediaPath && (
-              <img
+              <Box
+                component="img"
                 src={msg.mediaPath}
                 alt=""
-                style={{ maxWidth: '200px', marginBottom: '8px' }}
+                sx={{
+                  maxWidth: '100%',
+                  height: 'auto',
+                  mb: 1,
+                  borderRadius: 1,
+                }}
               />
             )}
-            <Typography>{msg.content}</Typography>
+
+            <Typography
+              sx={{
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-word',
+                overflowWrap: 'anywhere',
+              }}
+            >
+              {msg.content}
+            </Typography>
           </Box>
         ))
       )}

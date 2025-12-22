@@ -12,12 +12,10 @@ import {
 import { WhatsappRoutinesService } from '../services/whatsapp-routines.service';
 import { CreateWhatsappRoutineDto } from '../dtos/create-whatsapp-routine.dto';
 import { UpdateWhatsappRoutineDto } from '../dtos/update-whatsapp-routine.dto';
-import { WhatsappRoutineFiltersDto } from '../dtos/whatsapp-routine-filters.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { GetUser } from 'src/modules/auth/decorators/get-user.decorator';
-import { CreateWhatsappBlockDto } from '../dtos/create-whatsapp-block.dto';
 import { CreateWhatsappMessageDto } from '../dtos/create-whatsapp-message.dto';
 
 @Controller('automations/whatsapp/routines')
