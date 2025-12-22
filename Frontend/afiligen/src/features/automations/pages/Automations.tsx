@@ -17,8 +17,8 @@ import MessageIcon from '@mui/icons-material/Message';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import ContactsIcon from '@mui/icons-material/Contacts';
 import Tooltip from '@mui/material/Tooltip';
-import WhatsappRoutineModal from '../components/modals/WhatsappRoutineModal';
-import { WhatsAppModalType } from '../components/modals/WhatsappRoutineModal';
+import WhatsappRoutineModal from '../components/modals/WhatsappRoutineModal/WhatsappRoutineModal';
+import { WhatsAppModalType } from '../components/modals/WhatsappRoutineModal/WhatsappRoutineModal';
 
 interface ModalState<T = any> {
   type?: WhatsAppModalType;

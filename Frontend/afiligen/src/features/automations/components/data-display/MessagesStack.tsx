@@ -19,9 +19,14 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { ExpandableMessage } from './ExpandableMessage';
 import { RoutineMessage } from '../../../../services/automations/routines/whatsapp/whatsapp-routines';
 
+export type CreateMessagePayload = {
+  text: string;
+  image?: File | null;
+};
+
 interface MessagesStackProps {
   messages: RoutineMessage[];
-  onCreateMessage: (msg: { text: string; image?: File | null }) => void;
+  onCreateMessage: (msg: CreateMessagePayload) => void;
 }
 
 export function MessagesStack({
