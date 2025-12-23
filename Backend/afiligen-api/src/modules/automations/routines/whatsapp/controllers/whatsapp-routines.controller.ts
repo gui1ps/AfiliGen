@@ -17,6 +17,7 @@ import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
 import { GetUser } from 'src/modules/auth/decorators/get-user.decorator';
 import { CreateWhatsappMessageDto } from '../dtos/create-whatsapp-message.dto';
+import { UpdateWhatsappMessageDto } from '../dtos/update-whatsapp-message.dto';
 
 @Controller('automations/whatsapp/routines')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -77,5 +78,31 @@ export class WhatsappRoutinesController {
     @Body() dto: CreateWhatsappMessageDto,
   ) {
     return this.routinesService.addMessage(userUuid, routineId, dto);
+  }
+
+  @Patch(':routineId/messages/:messageId')
+  @Roles('user')
+  updateMessage(
+    @Param('routineId') routineId: number,
+    @Param('messageId') messageId: number,
+    @GetUser('userUuid') userUuid: string,
+    @Body() dto: UpdateWhatsappMessageDto,
+  ) {
+    return this.routinesService.updateMessage(
+      userUuid,
+      routineId,
+      messageId,
+      dto,
+    );
+  }
+
+  @Delete(':routineId/messages/:messageId')
+  @Roles('user')
+  removeMessage(
+    @Param('routineId') routineId: number,
+    @Param('messageId') messageId: number,
+    @GetUser('userUuid') userUuid: string,
+  ) {
+    return this.routinesService.removeMessage(userUuid, routineId, messageId);
   }
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Box,
   Stack,
@@ -11,10 +11,15 @@ import {
   IconButton,
   Popover,
 } from '@mui/material';
+
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/DeleteOutline';
+import EditIcon from '@mui/icons-material/EditOutlined';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+
 import EmojiPicker from 'emoji-picker-react';
-import DeleteIcon from '@mui/icons-material/Delete';
 
 import { ExpandableMessage } from './ExpandableMessage';
 import { RoutineMessage } from '../../../../services/automations/routines/whatsapp/whatsapp-routines';
@@ -27,11 +32,17 @@ export type CreateMessagePayload = {
 interface MessagesStackProps {
   messages: RoutineMessage[];
   onCreateMessage: (msg: CreateMessagePayload) => void;
+
+  // NOVOS
+  onDeleteMessage: (messageId: number) => void;
+  onUpdateMessage: (messageId: number, content: string) => void;
 }
 
 export function MessagesStack({
   messages,
   onCreateMessage,
+  onDeleteMessage,
+  onUpdateMessage,
 }: MessagesStackProps) {
   const [openCreate, setOpenCreate] = useState(false);
   const [text, setText] = useState('');
@@ -39,12 +50,38 @@ export function MessagesStack({
 
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState('');
+
+  const messagesSorted = useMemo(() => {
+    return [...messages].sort(
+      (a, b) =>
+        new Date(a.createdAt).valueOf() - new Date(b.createdAt).valueOf(),
+    );
+  }, [messages]);
+
   const handleSave = () => {
     if (!text && !image) return;
     onCreateMessage({ text, image });
     setText('');
     setImage(null);
     setOpenCreate(false);
+  };
+
+  const startEdit = (msg: RoutineMessage) => {
+    setEditingId(msg.id);
+    setEditingText(msg.content ?? '');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingText('');
+  };
+
+  const confirmEdit = () => {
+    if (!editingId) return;
+    onUpdateMessage(editingId, editingText);
+    cancelEdit();
   };
 
   return (
@@ -119,45 +156,95 @@ export function MessagesStack({
         </Card>
       )}
 
-      {messages.length === 0 ? (
+      {messagesSorted.length === 0 ? (
         <Typography>Sem mensagens para exibir</Typography>
       ) : (
-        messages.map((msg) => (
-          <Box
-            key={msg.id}
-            sx={{
-              p: 1,
-              border: '1px solid #ddd',
-              borderRadius: 1,
-              maxWidth: '100%',
-              overflow: 'hidden',
-              wordBreak: 'break-word',
-              overflowWrap: 'anywhere',
+        messagesSorted.map((msg) => {
+          const isEditing = editingId === msg.id;
 
-              position: 'relative',
-            }}
-          >
-            <IconButton
-              size="small"
+          return (
+            <Box
+              key={msg.id}
               sx={{
-                position: 'absolute',
-                top: 4,
-                right: 4,
-                zIndex: 2,
-                backgroundColor: 'rgba(255,255,255,0.8)',
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,1)',
-                },
-              }}
-              onClick={() => {
-                console.log('delete message', msg.id);
+                p: 1,
+                border: '1px solid #ddd',
+                borderRadius: 1,
+                maxWidth: '100%',
+                overflow: 'hidden',
+                wordBreak: 'break-word',
+                overflowWrap: 'anywhere',
+                position: 'relative',
               }}
             >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-            <ExpandableMessage text={msg.content ?? ''} collapsedMaxLines={2} />
-          </Box>
-        ))
+              {/* AÇÕES NO TOPO DIREITO */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 4,
+                  right: 4,
+                  zIndex: 2,
+                  display: 'flex',
+                  gap: 0.5,
+                  backgroundColor: 'rgba(255,255,255,0.85)',
+                  borderRadius: 1,
+                }}
+              >
+                {!isEditing ? (
+                  <>
+                    <IconButton
+                      size="small"
+                      aria-label="Editar mensagem"
+                      onClick={() => startEdit(msg)}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      aria-label="Remover mensagem"
+                      onClick={() => onDeleteMessage(msg.id)}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </>
+                ) : (
+                  <>
+                    <IconButton
+                      size="small"
+                      aria-label="Cancelar edição"
+                      onClick={cancelEdit}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      aria-label="Salvar edição"
+                      onClick={confirmEdit}
+                      disabled={editingText.trim().length === 0}
+                    >
+                      <CheckIcon fontSize="small" />
+                    </IconButton>
+                  </>
+                )}
+              </Box>
+
+              {isEditing ? (
+                <TextField
+                  fullWidth
+                  multiline
+                  label="Editar mensagem"
+                  value={editingText}
+                  onChange={(e) => setEditingText(e.target.value)}
+                  sx={{ pr: 8 }}
+                />
+              ) : (
+                <ExpandableMessage
+                  text={msg.content ?? ''}
+                  collapsedMaxLines={2}
+                />
+              )}
+            </Box>
+          );
+        })
       )}
     </Stack>
   );

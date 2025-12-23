@@ -14,6 +14,7 @@ import { WhatsappMessage } from '../entities/whatsapp-message.entity.ts';
 import { WhatsappRoutineBlock } from '../entities/whatsapp-routine-block';
 import { CreateWhatsappBlockDto } from '../dtos/create-whatsapp-block.dto';
 import { CreateWhatsappMessageDto } from '../dtos/create-whatsapp-message.dto';
+import { UpdateWhatsappMessageDto } from '../dtos/update-whatsapp-message.dto';
 
 @Injectable()
 export class WhatsappRoutinesService {
@@ -175,5 +176,61 @@ export class WhatsappRoutinesService {
     const entity = this.messageRepo.create({ ...message, routine });
     const createdMessage = await this.messageRepo.save(entity);
     return createdMessage;
+  }
+
+  async removeMessage(userUuid: string, routineId: number, messageId: number) {
+    const user = await this.userService.findOne(userUuid);
+    if (!user)
+      throw new NotFoundException(`User with uuid ${userUuid} not found`);
+
+    const routine = await this.routineRepo.findOne({
+      where: { id: routineId, user: { uuid: userUuid } },
+    });
+
+    if (!routine) throw new NotFoundException(`Routine ${routineId} not found`);
+
+    const message = await this.messageRepo.findOne({
+      where: { id: messageId, routine: { id: routineId } },
+    });
+
+    if (!message)
+      throw new NotFoundException(
+        `Message ${messageId} not found in routine ${routineId}`,
+      );
+
+    await this.messageRepo.remove(message);
+
+    return { success: true, removedId: messageId };
+  }
+
+  async updateMessage(
+    userUuid: string,
+    routineId: number,
+    messageId: number,
+    data: UpdateWhatsappMessageDto,
+  ) {
+    const user = await this.userService.findOne(userUuid);
+    if (!user)
+      throw new NotFoundException(`User with uuid ${userUuid} not found`);
+
+    const routine = await this.routineRepo.findOne({
+      where: { id: routineId, user: { uuid: userUuid } },
+    });
+
+    if (!routine) throw new NotFoundException(`Routine ${routineId} not found`);
+
+    const message = await this.messageRepo.findOne({
+      where: { id: messageId, routine: { id: routineId } },
+    });
+
+    if (!message)
+      throw new NotFoundException(
+        `Message ${messageId} not found in routine ${routineId}`,
+      );
+
+    const { routine: _ignoreRoutine, ...safeData } = data as any;
+
+    const updated = this.messageRepo.merge(message, safeData);
+    return this.messageRepo.save(updated);
   }
 }
