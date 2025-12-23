@@ -12,6 +12,17 @@ export interface RoutineMessage {
   status: string;
 }
 
+export interface Block {
+  id: number;
+  uuid: string;
+  createdAt: string;
+  updatedAt: string;
+  triggerTime: string;
+  sent: boolean;
+  active: boolean;
+  messages: RoutineMessage[];
+}
+
 export interface WhatsAppRoutine {
   id: number;
   uuid: string;
@@ -43,17 +54,6 @@ export type WhatsappRoutinePayload = Omit<
   | 'chatAppMessageBlock'
 >;
 
-export interface Block {
-  id: number;
-  uuid: string;
-  createdAt: string;
-  updatedAt: string;
-  triggerTime: string;
-  sent: boolean;
-  active: boolean;
-  messages: RoutineMessage[];
-}
-
 export interface CreateBlock {
   triggerTime: string;
   routineId: number;
@@ -69,11 +69,6 @@ export interface CreateBlockReponse {
   sent: boolean;
   active: boolean;
 }
-
-const createBlock = async (data: CreateBlock): Promise<WhatsAppRoutine> => {
-  const response = await api.post('/automations/whatsapp/blocks', data);
-  return response.data;
-};
 
 const getAllWhatsappRoutines = async (): Promise<WhatsAppRoutine[]> => {
   const response = await api.get('/automations/whatsapp/routines');
@@ -103,6 +98,11 @@ const updateWhatsappRoutine = async (
   return response.data;
 };
 
+const deleteWhatsappRoutine = async (id: number) => {
+  const response = await api.delete(`/automations/whatsapp/routines/${id}`);
+  return response.data;
+};
+
 const addMessageToWhatsappRoutine = async (
   id: number,
   data: Omit<
@@ -117,11 +117,32 @@ const addMessageToWhatsappRoutine = async (
   return response.data;
 };
 
+const createBlock = async (data: CreateBlock): Promise<WhatsAppRoutine> => {
+  const response = await api.post('/automations/whatsapp/blocks', data);
+  return response.data;
+};
+
+const updateBlock = async (
+  id: number,
+  data: Omit<CreateBlock, 'routineId'>,
+) => {
+  const response = await api.patch(`/automations/whatsapp/blocks/${id}`, data);
+  return response.data;
+};
+
+const removeBlock = async (id: number) => {
+  const response = await api.delete(`/automations/whatsapp/blocks/${id}`);
+  return response.data;
+};
+
 export {
   getAllWhatsappRoutines,
   getOneWhatsappRoutine,
   createWhatsappRoutine,
   updateWhatsappRoutine,
+  deleteWhatsappRoutine,
   addMessageToWhatsappRoutine,
   createBlock,
+  updateBlock,
+  removeBlock,
 };

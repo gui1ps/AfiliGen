@@ -4,6 +4,8 @@ import { toast } from 'react-toastify';
 import {
   getOneWhatsappRoutine,
   createBlock,
+  updateBlock,
+  removeBlock,
   Block,
 } from '../../../../../../services/automations/routines/whatsapp/whatsapp-routines';
 
@@ -35,5 +37,32 @@ export function RoutineBlocksView({ routineId }: Props) {
     }
   };
 
-  return <BlocksStack blocks={blocks} onCreateBlock={handleCreate} />;
+  const handleDelete = async (blockId: number) => {
+    try {
+      await removeBlock(blockId);
+      await load();
+      toast.success('Bloco removido!');
+    } catch {
+      toast.error('Erro ao remover bloco.');
+    }
+  };
+
+  const handleUpdateTime = async (blockId: number, triggerTime: string) => {
+    try {
+      await updateBlock(blockId, { triggerTime });
+      await load();
+      toast.success('Horário atualizado!');
+    } catch {
+      toast.error('Erro ao atualizar horário.');
+    }
+  };
+
+  return (
+    <BlocksStack
+      blocks={blocks}
+      onCreateBlock={handleCreate}
+      onDeleteBlock={handleDelete}
+      onUpdateBlockTime={handleUpdateTime}
+    />
+  );
 }
