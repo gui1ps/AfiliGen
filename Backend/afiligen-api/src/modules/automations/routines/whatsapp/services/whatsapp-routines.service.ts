@@ -7,12 +7,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { WhatsappRoutine } from '../entities/whatsapp-routine.entity';
 import { CreateWhatsappRoutineDto } from '../dtos/create-whatsapp-routine.dto';
-import { UpdateWhatsappRoutineDto } from '../dtos/update-whatsapp-routine.dto';
-import { WhatsappRoutineFiltersDto } from '../dtos/whatsapp-routine-filters.dto';
 import { UserService } from 'src/modules/users/user.service';
 import { WhatsappMessage } from '../entities/whatsapp-message.entity.ts';
 import { WhatsappRoutineBlock } from '../entities/whatsapp-routine-block';
-import { CreateWhatsappBlockDto } from '../dtos/create-whatsapp-block.dto';
 import { CreateWhatsappMessageDto } from '../dtos/create-whatsapp-message.dto';
 import { UpdateWhatsappMessageDto } from '../dtos/update-whatsapp-message.dto';
 
@@ -98,7 +95,7 @@ export class WhatsappRoutinesService {
   async update(
     userUuid: string,
     id: number,
-    dto: UpdateWhatsappRoutineDto,
+    dto: Partial<CreateWhatsappRoutineDto>,
   ): Promise<WhatsappRoutine> {
     const routine = await this.findOne(userUuid, id);
     const today = new Date();

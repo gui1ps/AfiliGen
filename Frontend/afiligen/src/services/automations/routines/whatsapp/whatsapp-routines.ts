@@ -1,4 +1,5 @@
 import api from '../../../api';
+import { WhatsappRoutineFormData } from '../../../../features/automations/hooks/useWhatsappRoutineWizardState';
 
 export interface RoutineMessage {
   id: number;
@@ -88,7 +89,7 @@ const createWhatsappRoutine = async (
 };
 
 const updateWhatsappRoutine = async (
-  data: Partial<WhatsappRoutinePayload>,
+  data: Partial<WhatsappRoutineFormData>,
   id: number,
 ) => {
   const response = await api.patch(

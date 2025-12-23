@@ -5,6 +5,7 @@ import { WhatsAppRoutine } from '../../../../../services/automations/routines/wh
 import { RoutineContactsView } from './views/RoutineContactsView';
 import { RoutineMessagesView } from './views/RoutineMessagesView';
 import { RoutineBlocksView } from './views/RoutineBlocksView';
+import { RoutineEditionView } from './views/RoutineEditionView';
 
 export type WhatsAppModalType =
   | 'routines'
@@ -33,7 +34,7 @@ export default function WhatsappRoutineModal({
     routine_contacts: 'Contatos',
     routine_message: 'Mensagens',
     routine_block: 'Blocos de Mensagens',
-    routine_edition: '',
+    routine_edition: 'Editar Rotina',
   };
 
   return (
@@ -53,6 +54,16 @@ export default function WhatsappRoutineModal({
       )}
 
       {type === 'routine_block' && <RoutineBlocksView routineId={item.id} />}
+
+      {type === 'routine_edition' && (
+        <RoutineEditionView
+          routineId={item.id}
+          onSaved={() => {
+            onSaved?.();
+            onClose();
+          }}
+        />
+      )}
     </BaseModal>
   );
 }

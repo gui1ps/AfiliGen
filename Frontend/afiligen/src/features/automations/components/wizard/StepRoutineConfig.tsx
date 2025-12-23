@@ -4,6 +4,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs, { Dayjs } from 'dayjs';
 import { WhatsappRoutineFormData } from '../../hooks/useWhatsappRoutineWizardState';
+import { Checkbox, FormControlLabel, InputAdornment } from '@mui/material';
 
 type Props = {
   formData: WhatsappRoutineFormData;
@@ -13,6 +14,7 @@ type Props = {
   ) => void;
   minStartDate: Dayjs;
   minEndDate: Dayjs;
+  disableStartAt?: boolean;
 };
 
 export function StepRoutineConfig({
@@ -20,7 +22,10 @@ export function StepRoutineConfig({
   setField,
   minStartDate,
   minEndDate,
+  disableStartAt,
 }: Props) {
+  const hasEndAt = Boolean(formData.endAt);
+
   return (
     <Box
       sx={{
@@ -66,10 +71,11 @@ export function StepRoutineConfig({
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <Box
           sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
             gap: 2,
             width: '100%',
+            alignItems: 'start',
           }}
         >
           <DateTimePicker
@@ -77,14 +83,43 @@ export function StepRoutineConfig({
             value={formData.startAt ? dayjs(formData.startAt) : null}
             onChange={(v) => setField('startAt', v ? v.toISOString() : null)}
             minDateTime={minStartDate}
+            disabled={disableStartAt}
+            slotProps={{
+              textField: disableStartAt
+                ? { helperText: 'Já iniciada — não é possível editar' }
+                : undefined,
+            }}
           />
-
           <DateTimePicker
             label="Data final"
             value={formData.endAt ? dayjs(formData.endAt) : null}
             onChange={(v) => setField('endAt', v ? v.toISOString() : null)}
             minDateTime={minEndDate}
-            slotProps={{ textField: { helperText: 'Opcional' } }}
+            disabled={!formData.endAt}
+            slotProps={{
+              textField: {
+                helperText: formData.endAt
+                  ? 'Opcional'
+                  : 'Desmarcado: sem data final',
+                InputProps: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Checkbox
+                        size="small"
+                        checked={Boolean(formData.endAt)}
+                        onChange={(_, checked) => {
+                          if (!checked) {
+                            setField('endAt', null);
+                          } else {
+                            setField('endAt', minEndDate.toISOString());
+                          }
+                        }}
+                      />
+                    </InputAdornment>
+                  ),
+                },
+              },
+            }}
           />
         </Box>
       </LocalizationProvider>

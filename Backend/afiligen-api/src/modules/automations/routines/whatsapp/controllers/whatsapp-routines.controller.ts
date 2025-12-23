@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { WhatsappRoutinesService } from '../services/whatsapp-routines.service';
 import { CreateWhatsappRoutineDto } from '../dtos/create-whatsapp-routine.dto';
-import { UpdateWhatsappRoutineDto } from '../dtos/update-whatsapp-routine.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { RolesGuard } from 'src/modules/auth/guards/roles.guard';
@@ -52,7 +51,7 @@ export class WhatsappRoutinesController {
   @Roles('user')
   async update(
     @Param('id') id: number,
-    @Body() dto: UpdateWhatsappRoutineDto,
+    @Body() dto: Partial<CreateWhatsappRoutineDto>,
     @GetUser('userUuid') userUuid: string,
   ) {
     return this.routinesService.update(userUuid, id, dto);
