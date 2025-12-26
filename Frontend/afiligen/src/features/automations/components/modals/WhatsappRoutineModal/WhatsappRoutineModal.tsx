@@ -6,13 +6,15 @@ import { RoutineContactsView } from './views/RoutineContactsView';
 import { RoutineMessagesView } from './views/RoutineMessagesView';
 import { RoutineBlocksView } from './views/RoutineBlocksView';
 import { RoutineEditionView } from './views/RoutineEditionView';
+import { DeleteRoutineView } from './views/DeleteRoutineView';
 
 export type WhatsAppModalType =
   | 'routines'
   | 'routine_message'
   | 'routine_block'
   | 'routine_edition'
-  | 'routine_contacts';
+  | 'routine_contacts'
+  | 'delete_routine';
 
 interface Props {
   type?: WhatsAppModalType;
@@ -35,6 +37,7 @@ export default function WhatsappRoutineModal({
     routine_message: 'Mensagens',
     routine_block: 'Blocos de Mensagens',
     routine_edition: 'Editar Rotina',
+    delete_routine: 'Deletar Rotina',
   };
 
   return (
@@ -59,6 +62,18 @@ export default function WhatsappRoutineModal({
         <RoutineEditionView
           routineId={item.id}
           onSaved={() => {
+            onSaved?.();
+            onClose();
+          }}
+        />
+      )}
+
+      {type === 'delete_routine' && (
+        <DeleteRoutineView
+          routineName={item.name}
+          routineId={item.id}
+          onClose={onClose}
+          onSave={() => {
             onSaved?.();
             onClose();
           }}

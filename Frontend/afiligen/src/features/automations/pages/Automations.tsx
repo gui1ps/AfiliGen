@@ -13,6 +13,7 @@ import Paper from '@mui/material/Paper';
 import { useQueryClient } from '@tanstack/react-query';
 import Switch from '@mui/material/Switch';
 import EditIcon from '@mui/icons-material/Edit';
+import { Delete } from '@mui/icons-material';
 import MessageIcon from '@mui/icons-material/Message';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import ContactsIcon from '@mui/icons-material/Contacts';
@@ -50,6 +51,11 @@ export default function Automations() {
 
   const whatsAppRoutineActionButtons = [
     { icon: <EditIcon />, type: 'routine_edition', tooltip: 'Editar rotina' },
+    {
+      icon: <Delete />,
+      type: 'delete_routine',
+      tooltip: 'Deletar Rotina',
+    },
     {
       icon: <MessageIcon />,
       type: 'routine_message',
@@ -202,8 +208,14 @@ export default function Automations() {
           'routine_block',
           'routine_edition',
           'routine_contacts',
+          'delete_routine',
         ].includes(activeModal.type || '')}
         onClose={() => closeModal()}
+        onSaved={async () => {
+          queryClient.invalidateQueries({
+            queryKey: ['whatsappRoutines'],
+          });
+        }}
         type={activeModal.type}
         item={activeModal.data}
       />
